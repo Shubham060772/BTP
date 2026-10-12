@@ -42,6 +42,27 @@ find_first() {
   find /kaggle/input -type f -name "$name" -print -quit 2>/dev/null || true
 }
 
+download_beauty() {
+  local destination="$1"
+  local url="https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/review_categories/All_Beauty.jsonl?download=true"
+  mkdir -p "$(dirname "$destination")"
+  log "No attached Beauty file found; downloading the official dataset"
+  log "Source: McAuley-Lab/Amazon-Reviews-2023"
+  if command -v curl >/dev/null 2>&1; then
+    if ! curl --location --fail --retry 3 --retry-delay 5 \
+      --continue-at - --output "$destination" "$url"; then
+      fail "Download failed. Enable Internet in Kaggle or attach All_Beauty.jsonl as notebook input."
+    fi
+  elif command -v wget >/dev/null 2>&1; then
+    if ! wget --continue --output-document="$destination" "$url"; then
+      fail "Download failed. Enable Internet in Kaggle or attach All_Beauty.jsonl as notebook input."
+    fi
+  else
+    fail "Neither curl nor wget is installed; attach All_Beauty.jsonl as notebook input."
+  fi
+  [[ -s "$destination" ]] || fail "The downloaded Beauty file is empty."
+}
+
 log "Project: $PROJECT_DIR"
 log "Dataset: $DATASET"
 log "Outputs: $WORK_DIR"
@@ -71,8 +92,11 @@ case "$DATASET" in
     if [[ -z "$INPUT_PATH" ]]; then
       INPUT_PATH="$(find_first 'All_Beauty.jsonl')"
     fi
-    [[ -n "$INPUT_PATH" && -f "$INPUT_PATH" ]] || fail \
-      "All_Beauty.jsonl was not found. Attach it as Kaggle input or pass its path as argument 2."
+    if [[ -z "$INPUT_PATH" ]]; then
+      INPUT_PATH="$WORK_DIR/data/All_Beauty.jsonl"
+      download_beauty "$INPUT_PATH"
+    fi
+    [[ -f "$INPUT_PATH" ]] || fail "Beauty input is not a file: $INPUT_PATH"
     if [[ ! -f "$PROCESSED_DATA" ]]; then
       log "Preparing timestamped Beauty ${CORE}-core data from every JSONL row"
       "$PYTHON_BIN" "$PROJECT_DIR/src/prepare_amazon_beauty.py" \
