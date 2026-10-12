@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+roadmap/.venv/
+
+# Generated experiment artifacts
+results/
+checkpoints/
+*.log
+*.stackdump
+.ppt_preview_*/
+Slide*.PNG
+
+# Datasets are attached separately in Kaggle
+roadmap/data/
+*.pkl
+*.parquet
+*.jsonl
+
+# Editor/OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
