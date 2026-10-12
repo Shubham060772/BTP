@@ -21,9 +21,10 @@ bash run_kaggle.sh book /kaggle/input/<amazon-book-folder>
 ```
 
 The defaults run seeds `42 123 456 789 1024`, embedding dimension 64, every
-eligible training instance, and every evaluation user. Beauty uses full-item
-ranking. Amazon-Book uses one positive plus 99 fixed negatives because full
-ranking over 91,599 items is costly.
+eligible training instance, and every evaluation user. Beauty uses iterative
+3-core filtering—the minimum that permits one train, one validation, and one
+test event—and full-item ranking. Amazon-Book uses one positive plus 99 fixed
+negatives because full ranking over 91,599 items is costly.
 
 To run one seed first:
 

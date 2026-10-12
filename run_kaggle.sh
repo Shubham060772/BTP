@@ -7,7 +7,7 @@
 #   !bash run_kaggle.sh book /kaggle/input/<dataset-containing-train-test>
 #
 # Optional overrides:
-#   SEEDS="42 123" EPOCHS=50 BATCH_SIZE=1024 CORE=5 bash run_kaggle.sh beauty
+#   SEEDS="42 123" EPOCHS=50 BATCH_SIZE=1024 CORE=3 bash run_kaggle.sh beauty
 #   MODELS="popularity mf lightgcn" bash run_kaggle.sh book
 
 set -euo pipefail
@@ -84,7 +84,10 @@ PY
 
 case "$DATASET" in
   beauty)
-    CORE="${CORE:-5}"
+    # Three interactions are the mathematical minimum for one train, one
+    # validation, and one test event. This retains the largest defensible
+    # timestamped leave-two-out dataset.
+    CORE="${CORE:-3}"
     BATCH_SIZE="${BATCH_SIZE:-1024}"
     RANKING="full"
     RESULT_DIR="$WORK_DIR/results/beauty_${CORE}core"
