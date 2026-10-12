@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GNN-Based Product Recommendation System — BTP Roadmap</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/theme/black.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/monokai.css">
+<style>
+:root {
+  --r-background-color: #0d1117;
+  --r-main-color: #c9d1d9;
+  --r-heading-color: #58a6ff;
+  --r-link-color: #58a6ff;
+  --r-selection-background-color: #1f6feb;
+}
+.reveal { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+.reveal h1, .reveal h2, .reveal h3 { color: #58a6ff; font-weight: 600; text-transform: none; }
+.reveal h1 { font-size: 2.0em; }
+.reveal h2 { font-size: 1.5em; }
+.reveal h3 { font-size: 1.2em; color: #79c0ff; }
+.reveal .subtitle { color: #8b949e; font-size: 0.9em; margin-top: 0.5em; }
+.reveal .accent { color: #f0883e; font-weight: 600; }
+.reveal .highlight { color: #7ee787; }
+.reveal .star { color: #e3b341; }
+.reveal .dim { color: #8b949e; }
+.reveal .math-block { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1em 1.5em; margin: 0.8em auto; display: inline-block; }
+.reveal .diagram-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2em; margin: 0.8em auto; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.65em; line-height: 1.6; text-align: center; max-width: 85%; white-space: pre; }
+.reveal .diagram-box .node { color: #58a6ff; }
+.reveal .diagram-box .edge { color: #8b949e; }
+.reveal .diagram-box .label { color: #7ee787; }
+.reveal .diagram-box .accent { color: #f0883e; }
+.reveal table { margin: 0.8em auto; border-collapse: collapse; font-size: 0.7em; }
+.reveal table th { background: #1f2937; color: #58a6ff; padding: 0.5em 1em; border: 1px solid #30363d; }
+.reveal table td { padding: 0.5em 1em; border: 1px solid #30363d; }
+.reveal table tr:nth-child(even) { background: #161b22; }
+.reveal .timeline-grid { display: grid; grid-template-columns: auto 1fr; gap: 0.3em 1em; font-size: 0.7em; text-align: left; }
+.reveal .timeline-grid .week { color: #f0883e; font-weight: 600; white-space: nowrap; }
+.reveal .pill { display: inline-block; background: #1f6feb33; border: 1px solid #1f6feb; border-radius: 20px; padding: 0.2em 0.8em; font-size: 0.6em; margin: 0.15em; }
+.reveal .pill.green { background: #23863533; border-color: #238635; }
+.reveal .pill.orange { background: #f0883e33; border-color: #f0883e; }
+.reveal .pill.red { background: #f8514933; border-color: #f85149; }
+.reveal .columns { display: flex; gap: 1.5em; align-items: flex-start; }
+.reveal .columns > div { flex: 1; }
+.reveal .code-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 0.8em 1em; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.6em; text-align: left; }
+.reveal .key-insight { background: linear-gradient(135deg, #1f6feb22, #23863522); border: 1px solid #1f6feb; border-radius: 10px; padding: 1em 1.5em; margin: 0.8em auto; max-width: 80%; }
+.reveal .key-insight h3 { margin-top: 0; font-size: 1em; }
+.reveal ul { text-align: left; }
+.reveal li { margin-bottom: 0.3em; }
+.reveal .small { font-size: 0.7em; }
+.reveal .vs-table td:first-child { font-weight: 600; color: #58a6ff; }
+section .r-stretch { max-height: 70vh; }
+.reveal .slides section { overflow-y: auto !important; max-height: 100%; }
+.reveal .slides { overflow: visible; }
+.reveal { overflow: auto; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 1: TITLE + OVERVIEW                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <h1>GNN-Based Product<br>Recommendation System</h1>
+  <p class="subtitle">BTP Roadmap &amp; Concept Guide</p>
+  <br>
+  <p class="dim" style="font-size:0.6em;">Bachelor's Thesis Project &bull; 10–12 Weeks</p>
+</section>
+
+<section>
+  <h2>The Big Picture</h2>
+  <div class="diagram-box">
+<span class="label">DATA</span>
+  │
+  ├── <span class="node">Users</span>
+  └── <span class="node">Items</span>
+        │
+        ▼
+<span class="label">GRAPH</span>  (User–Item Interactions)
+        │
+        ▼
+<span class="accent">GNN / Graph Representation Learning</span>
+        │
+        ├── <span class="node">User Embeddings</span>
+        └── <span class="node">Item Embeddings</span>
+              │
+              ▼
+<span class="label">LINK PREDICTION</span>  →  <span class="accent">Recommendation</span>
+              │
+              ▼
+<span class="highlight">Top-K Recommended Items</span>
+  </div>
+</section>
+
+<section>
+  <h2>10–12 Week Timeline</h2>
+  <div class="timeline-grid">
+    <span class="week">Week 1</span><span>RecSys Fundamentals + Collaborative Filtering</span>
+    <span class="week">Week 1–2</span><span>Matrix Factorization (PyTorch)</span>
+    <span class="week">Week 2</span><span>Graph Theory for Recommendation</span>
+    <span class="week">Week 3</span><span>Message Passing + GCN</span>
+    <span class="week">Week 4</span><span>GraphSAGE + GAT</span>
+    <span class="week">Week 4–5</span><span>PyTorch Geometric</span>
+    <span class="week">Week 5–6</span><span>LightGCN + Recommendation GNNs</span>
+    <span class="week">Week 6</span><span>BPR Loss + Negative Sampling</span>
+    <span class="week">Week 7–8</span><span>Build Recommender + Evaluation</span>
+    <span class="week">Week 8–9</span><span>Dataset + Research Question</span>
+    <span class="week">Week 9–10</span><span>Experiments + Ablations</span>
+    <span class="week">Week 10–12</span><span>Advanced Direction + Thesis Writing</span>
+  </div>
+</section>
+
+<section>
+  <h2>The Key Insight</h2>
+  <div class="key-insight">
+    <h3>Recommendation = Link Prediction on a User–Item Graph</h3>
+    <p style="font-size:0.8em;">
+      If User <span class="accent">A</span> is connected to Items <span class="highlight">1, 3, 5</span>,
+      can we predict whether a link to Item <span class="star">7</span> should exist?
+    </p>
+    <p style="font-size:0.7em; color: #8b949e;">
+      This single idea is the conceptual foundation of the entire BTP.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 2: RECOMMENDATION FUNDAMENTALS                -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <section>
+    <h1>Phase 1</h1>
+    <h2>Recommendation System Fundamentals</h2>
+    <p class="subtitle">Week 1 — Before GNNs, understand why RecSys works the way it does</p>
+  </section>
+
+  <section>
+    <h2>The User × Item Matrix</h2>
+    <table>
+      <tr><th></th><th>Movie A</th><th>Movie B</th><th>Movie C</th><th>Movie D</th></tr>
+      <tr><td>User 1</td><td>5</td><td>4</td><td class="accent">?</td><td class="accent">?</td></tr>
+      <tr><td>User 2</td><td>4</td><td class="accent">?</td><td>5</td><td>3</td></tr>
+      <tr><td>User 3</td><td class="accent">?</td><td>5</td><td>4</td><td class="accent">?</td></tr>
+    </table>
+    <br>
+    <div class="math-block">
+      \( R_{ui} \rightarrow \hat{R}_{ui} \)
+    </div>
+    <p class="small dim">Observed interaction → Predicted preference</p>
+  </section>
+
+  <section>
+    <h2>Three Approaches</h2>
+    <div class="columns" style="font-size:0.75em;">
+      <div>
+        <h3>1. Popularity</h3>
+        <p>Most interacted items.</p>
+        <p class="dim">Simple baseline.</p>
+        <p class="fragment" data-fragment-index="1" style="color:#7ee787;">Important baseline for your BTP!</p>
+      </div>
+      <div>
+        <h3>2. Content-Based</h3>
+        <p>Match user preferences<br>to item features.</p>
+        <p class="dim">Needs item metadata.</p>
+      </div>
+      <div>
+        <h3>3. Collaborative</h3>
+        <p>Learn from user–item<br>interactions.</p>
+        <p class="dim">No metadata needed.</p>
+        <p class="fragment" data-fragment-index="1" style="color:#7ee787;">Your BTP focus!</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Content-Based Filtering</h2>
+    <div class="diagram-box">
+<span class="node">User preferences</span>
+        │
+        ▼
+<span class="node">Item features</span>  (genre, director, tags)
+        │
+        ▼
+<span class="label">Similarity</span>  (cosine, Jaccard, etc.)
+        │
+        ▼
+<span class="accent">Recommendation</span>
+    </div>
+    <p class="small dim">Limitation: Can't discover novel interests (filter bubble)</p>
+  </section>
+
+  <section>
+    <h2>Collaborative Filtering</h2>
+    <div class="diagram-box">
+<span class="node">User–Item Interactions</span>
+        │
+        ▼
+<span class="label">Learn latent preferences</span>
+        │
+        ▼
+<span class="accent">Recommendation</span>
+
+"Users who liked X also liked Y"
+    </div>
+    <p class="small">
+      <span class="fragment highlight" data-fragment-index="1">This is the paradigm your BTP extends with GNNs.</span>
+    </p>
+  </section>
+
+  <section>
+    <h2>Why Start Here?</h2>
+    <div class="key-insight">
+      <p style="font-size:0.85em;">Your thesis will say:</p>
+      <p style="font-size:0.9em; color: #7ee787;">
+        "We compare conventional collaborative filtering<br>
+        with graph-based recommendation."
+      </p>
+      <p style="font-size:0.75em; color: #8b949e;">
+        Much stronger than simply: "We implemented a GNN recommender."
+      </p>
+    </div>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 2b: MATRIX FACTORIZATION                      -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <section>
+    <h1>Phase 2</h1>
+    <h2>Matrix Factorization</h2>
+    <p class="subtitle">Week 1–2 — The critical baseline for your BTP</p>
+  </section>
+
+  <section>
+    <h2>Core Idea</h2>
+    <div class="math-block">
+      \( R \approx U V^T \)
+    </div>
+    <br>
+    <div class="columns" style="font-size:0.7em;">
+      <div>
+        <p><span class="accent">R</span> = Rating matrix<br>(users × items)</p>
+      </div>
+      <div>
+        <p><span class="highlight">U</span> = User embeddings<br>(users × d)</p>
+      </div>
+      <div>
+        <p><span class="node">V</span> = Item embeddings<br>(items × d)</p>
+      </div>
+    </div>
+    <br>
+    <div class="fragment math-block">
+      \( \hat{R}_{ui} = \mathbf{u}_i^T \mathbf{v}_j \)
+    </div>
+    <p class="fragment small">Predicted rating = dot product of user &amp; item embeddings</p>
+  </section>
+
+  <section>
+    <h2>Visually</h2>
+    <div class="diagram-box">
+                  items →
+         ┌─────────────────┐
+         │                 │
+users →  │    <span class="accent">R</span>            │  ≈  <span class="highlight">U</span>  ×  <span class="node">V<sup>T</sup></span>
+         │  (sparse)       │
+         │                 │   (n×d)  (d×m)
+         └─────────────────┘
+           (n × m)
+    </div>
+    <p class="small fragment">
+      Each user and item gets a <span class="accent">d-dimensional embedding</span>.<br>
+      The dot product of these embeddings predicts the interaction.
+    </p>
+  </section>
+
+  <section>
+    <h2>Why MF Matters for Your BTP</h2>
+    <ul style="font-size:0.8em;">
+      <li class="fragment">It's the <span class="accent">strongest non-graph baseline</span></li>
+      <li class="fragment">Same core idea as GNN: learn embeddings, compute scores</li>
+      <li class="fragment">GNNs extend MF by <span class="highlight">using graph structure</span> during embedding learning</li>
+      <li class="fragment">If your GNN can't beat MF → your graph isn't helping</li>
+    </ul>
+    <br>
+    <p class="fragment small" style="color:#f0883e;">Implement MF in PyTorch — you'll reuse this code structure for GNN models.</p>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 3: GRAPH THEORY ESSENTIALS                    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <section>
+    <h1>Phase 3</h1>
+    <h2>Graph Theory for Recommendation</h2>
+    <p class="subtitle">Week 2 — Only what you need</p>
+  </section>
+
+  <section>
+    <h2>Graph Basics</h2>
+    <div class="columns" style="font-size:0.7em;">
+      <div>
+        <h3>Concepts</h3>
+        <ul>
+          <li><span class="node">Nodes</span> (vertices)</li>
+          <li><span class="edge">Edges</span> (connections)</li>
+          <li>Node features</li>
+          <li>Edge features / weights</li>
+          <li>Neighborhood</li>
+          <li>Degree</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Adjacency Matrix</h3>
+        <div class="diagram-box" style="font-size:1em;">
+    A  B  C
+A [ 0  1  1 ]
+B [ 1  0  0 ]
+C [ 1  0  0 ]
+        </div>
+        <p class="dim">A is connected to B and C</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Bipartite Graph — The Key Concept</h2>
+    <div class="diagram-box">
+  <span class="node">Users</span>              <span class="accent">Items</span>
+
+  User 1 ─────────── Movie A
+    │
+    └──────────────── Movie C
+
+  User 2 ─────────── Movie A
+    │
+    └──────────────── Movie B
+
+  User 3 ─────────── Movie B
+    </div>
+    <p class="small fragment">Two disjoint sets of nodes. Edges only go <em>between</em> sets, never within.</p>
+  </section>
+
+  <section>
+    <h2>Formal Definition</h2>
+    <div class="math-block">
+      \( G = (U, I, E) \)
+    </div>
+    <br>
+    <div style="font-size:0.8em;">
+      <p><span class="node">\(U\)</span> = set of user nodes</p>
+      <p><span class="accent">\(I\)</span> = set of item nodes</p>
+      <p><span class="highlight">\(E\)</span> = set of interaction edges</p>
+    </div>
+    <br>
+    <p class="fragment small" style="color:#f0883e;">
+      Your entire recommendation system lives on this graph.
+    </p>
+  </section>
+
+  <section>
+    <h2>From Matrix to Graph</h2>
+    <div class="columns" style="font-size:0.65em;">
+      <div>
+        <h3>Rating Matrix</h3>
+        <table>
+          <tr><th></th><th>A</th><th>B</th><th>C</th></tr>
+          <tr><td>U1</td><td>5</td><td></td><td>4</td></tr>
+          <tr><td>U2</td><td>5</td><td>3</td><td></td></tr>
+          <tr><td>U3</td><td></td><td>4</td><td></td></tr>
+        </table>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; font-size:2em; color:#8b949e;">→</div>
+      <div>
+        <h3>Bipartite Graph</h3>
+        <div class="diagram-box" style="font-size:1em;">
+U1 ── A
+U1 ── C
+U2 ── A
+U2 ── B
+U3 ── B
+        </div>
+      </div>
+    </div>
+    <p class="fragment small">Each non-zero entry becomes an edge. The graph captures the same information structurally.</p>
+  </section>
+
+  <section>
+    <h2>Why Graph &gt; Matrix?</h2>
+    <ul style="font-size:0.8em;">
+      <li class="fragment"><span class="accent">Multi-hop connections</span> — U1 and U2 share Movie A → they're similar</li>
+      <li class="fragment"><span class="accent">Transitive structure</span> — paths through the graph encode latent similarity</li>
+      <li class="fragment"><span class="accent">Extensibility</span> — add genre nodes, actor nodes, social edges…</li>
+      <li class="fragment"><span class="accent">GNNs</span> can learn from this structural information</li>
+    </ul>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 4: GNN CORE CONCEPTS                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <section>
+    <h1>Phase 4–6</h1>
+    <h2>GNN Core Concepts</h2>
+    <p class="subtitle">Week 3–4 — Message Passing, GCN, GraphSAGE, GAT</p>
+  </section>
+
+  <section>
+    <h2>Message Passing Intuition</h2>
+    <p style="font-size:0.85em;">How can a user's representation be influenced by the items they interacted with?</p>
+    <div class="diagram-box">
+  <span class="accent">Movie 1</span> ──→ <span class="node">User A</span>
+  <span class="accent">Movie 2</span> ──→ <span class="node">User A</span>
+                    │
+                    ▼
+          <span class="highlight">Updated User A representation</span>
+                    │
+                    ▼
+          recommend → <span class="star">Movie 3</span>
+    </div>
+    <p class="fragment small">Each node <em>collects messages</em> from its neighbors and updates its representation.</p>
+  </section>
+
+  <section>
+    <h2>Message Passing Framework</h2>
+    <div class="diagram-box">
+<span class="label">For each node:</span>
+
+1. <span class="accent">MESSAGE</span>    — neighbors send their features
+                 │
+                 ▼
+2. <span class="highlight">AGGREGATE</span>  — combine neighbor messages
+                    (sum, mean, max, attention)
+                 │
+                 ▼
+3. <span class="node">UPDATE</span>     — transform to get new node features
+                 │
+                 ▼
+<span class="star">Repeat for L layers</span>
+    </div>
+    <p class="fragment small">After L layers, each node's representation captures its L-hop neighborhood.</p>
+  </section>
+
+  <section>
+    <h2>GCN — Graph Convolutional Network</h2>
+    <div class="math-block">
+      \( H^{(l+1)} = \sigma \left( \hat{D}^{-1/2} \hat{A} \hat{D}^{-1/2} H^{(l)} W^{(l)} \right) \)
+    </div>
+    <br>
+    <div style="font-size:0.7em; text-align:left; max-width:70%; margin:auto;">
+      <p><span class="accent">\(\hat{A}\)</span> = adjacency matrix + self-loops</p>
+      <p><span class="accent">\(\hat{D}\)</span> = degree matrix of \(\hat{A}\)</p>
+      <p><span class="accent">\(H^{(l)}\)</span> = node features at layer \(l\)</p>
+      <p><span class="accent">\(W^{(l)}\)</span> = learnable weight matrix</p>
+      <p><span class="accent">\(\sigma\)</span> = activation (ReLU)</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>GCN Simplified</h2>
+    <div class="diagram-box">
+<span class="node">Node features</span>
+       │
+       ▼
+<span class="accent">Neighbor aggregation</span>
+ (normalized sum of neighbor features)
+       │
+       ▼
+<span class="highlight">Linear transform</span>  (multiply by W)
+       │
+       ▼
+<span class="label">Activation</span>  (ReLU)
+       │
+       ▼
+<span class="star">Updated representation</span>
+       │
+   Repeat L times
+    </div>
+  </section>
+
+  <section>
+    <h2>GraphSAGE</h2>
+    <div style="font-size:0.8em;">
+      <p><span class="accent">Key idea:</span> Sample a fixed number of neighbors</p>
+    </div>
+    <div class="diagram-box">
+All neighbors → <span class="accent">Sample K neighbors</span> → Aggregate → Update
+    </div>
+    <br>
+    <div style="font-size:0.75em;">
+      <p class="fragment"><span class="highlight">Why useful?</span></p>
+      <ul>
+        <li class="fragment">Scales to large graphs (fixed computation per node)</li>
+        <li class="fragment"><span class="accent">Inductive</span> — can handle unseen nodes</li>
+        <li class="fragment">Multiple aggregators: mean, LSTM, pooling</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>GAT — Graph Attention Network</h2>
+    <div style="font-size:0.8em;">
+      <p><span class="accent">Key idea:</span> Not all neighbors are equally important</p>
+    </div>
+    <div class="diagram-box">
+For node <span class="node">i</span> and neighbor <span class="accent">j</span>:
+
+<span class="label">attention weight</span>  α<sub>ij</sub> = softmax( LeakyReLU( a<sup>T</sup>[Wh<sub>i</sub> ∥ Wh<sub>j</sub>] ) )
+
+<span class="highlight">new features</span>  h'<sub>i</sub> = σ( Σ<sub>j</sub> α<sub>ij</sub> · W h<sub>j</sub> )
+    </div>
+    <p class="fragment small">Learns which neighbors matter most via attention coefficients.</p>
+  </section>
+
+  <section>
+    <h2>Comparison</h2>
+    <table style="font-size:0.65em;" class="vs-table">
+      <tr><th></th><th>GCN</th><th>GraphSAGE</th><th>GAT</th></tr>
+      <tr><td>Aggregation</td><td>Normalized sum</td><td>Sample + aggregate</td><td>Attention-weighted</td></tr>
+      <tr><td>Scalability</td><td>Full graph</td><td>Mini-batch friendly</td><td>Full graph</td></tr>
+      <tr><td>Inductive?</td><td>No (transductive)</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td>Complexity</td><td>Low</td><td>Medium</td><td>Higher</td></tr>
+      <tr><td>For RecSys</td><td>Good baseline</td><td>Large datasets</td><td>When neighbor importance varies</td></tr>
+    </table>
+    <p class="fragment small" style="color:#f0883e;">
+      You don't need to master all three. Learn them for comparison — your BTP model will likely be LightGCN.
+    </p>
+  </section>
+
+  <section>
+    <h2>The Oversmoothing Problem</h2>
+    <div class="diagram-box">
+<span class="highlight">Layer 1:</span>  Each node knows its 1-hop neighbors
+<span class="highlight">Layer 2:</span>  Each node knows its 2-hop neighborhood
+<span class="highlight">Layer 3:</span>  Representations start converging
+<span class="accent">Layer 5+:</span> All nodes look nearly identical!
+    </div>
+    <br>
+    <p class="fragment small">
+      More layers ≠ better. For recommendation, <span class="accent">2–3 layers</span> is typically optimal.
+    </p>
+    <p class="fragment small dim">
+      This is a valid experiment for your BTP: "How does GNN depth affect recommendation quality?"
+    </p>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 5: RECOMMENDATION-SPECIFIC GNNs               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <section>
+    <h1>Phase 8</h1>
+    <h2>Recommendation-Specific GNNs</h2>
+    <p class="subtitle">Week 5–6 — Where your BTP specializes</p>
+    <p><span class="star">★★★★★</span></p>
+  </section>
+
+  <section>
+    <h2>Why Generic GNNs Aren't Enough</h2>
+    <div style="font-size:0.8em;">
+      <p>Standard GCN was designed for <span class="accent">node classification</span>:</p>
+      <ul>
+        <li class="fragment">Uses non-linear activations → not needed for CF</li>
+        <li class="fragment">Uses feature transformation → recommendation has no initial features</li>
+        <li class="fragment">Designed for homogeneous graphs → recommendation is bipartite</li>
+      </ul>
+      <br>
+      <p class="fragment" style="color:#7ee787;">
+        We need architectures designed for the recommendation task.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>NGCF</h2>
+    <p class="subtitle">Neural Graph Collaborative Filtering (Wang et al., 2019)</p>
+    <div class="diagram-box">
+<span class="node">User / Item ID</span>
+        │
+        ▼
+<span class="accent">Embedding layer</span>
+        │
+        ▼
+<span class="highlight">GNN propagation</span> (with feature transform + nonlinearity)
+        │
+        ▼
+<span class="label">Layer concatenation</span>
+        │
+        ▼
+<span class="star">Prediction</span>
+    </div>
+    <p class="small fragment">First major paper applying GNNs to collaborative filtering on user-item graphs.</p>
+  </section>
+
+  <section>
+    <h2>LightGCN</h2>
+    <p class="subtitle">He et al., 2020 — The star of your BTP <span class="star">★</span></p>
+    <div class="key-insight" style="font-size:0.85em;">
+      <p><strong>Key discovery:</strong> The feature transformation and non-linear activation in GCN/NGCF are <span class="accent">not useful</span> — even harmful — for collaborative filtering.</p>
+      <p class="fragment" style="color:#7ee787;">LightGCN strips them away, keeping only neighborhood aggregation.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>LightGCN Architecture</h2>
+    <div class="diagram-box">
+<span class="node">User</span> ──── <span class="accent">Item</span>
+  │           │
+  └─────┬─────┘
+        │
+        ▼
+<span class="highlight">Light Graph Convolution</span>  (no W, no σ)
+
+  Layer 0:  e<sub>u</sub><sup>(0)</sup>   (initial embedding)
+  Layer 1:  e<sub>u</sub><sup>(1)</sup> = Σ <span class="dim">1/√(|N<sub>u</sub>|·|N<sub>i</sub>|)</span> · e<sub>i</sub><sup>(0)</sup>
+  Layer 2:  e<sub>u</sub><sup>(2)</sup> = Σ <span class="dim">1/√(|N<sub>u</sub>|·|N<sub>i</sub>|)</span> · e<sub>i</sub><sup>(1)</sup>
+        │
+        ▼
+<span class="accent">Layer Combination</span>
+
+  e<sub>u</sub> = (e<sub>u</sub><sup>(0)</sup> + e<sub>u</sub><sup>(1)</sup> + e<sub>u</sub><sup>(2)</sup>) / 3
+        │
+        ▼
+<span class="star">Score</span> = e<sub>u</sub><sup>T</sup> · e<sub>i</sub>
+    </div>
+  </section>
+
+  <section>
+    <h2>LightGCN — What to Understand</h2>
+    <ul style="font-size:0.8em;">
+      <li class="fragment"><span class="accent">User-item bipartite graph</span> — the graph structure</li>
+      <li class="fragment"><span class="accent">Embedding propagation</span> — only symmetric normalization, no weights</li>
+      <li class="fragment"><span class="accent">Layer aggregation</span> — average embeddings across all layers</li>
+      <li class="fragment"><span class="accent">BPR loss</span> — pairwise ranking optimization</li>
+      <li class="fragment"><span class="accent">Negative sampling</span> — creating training signal from implicit feedback</li>
+    </ul>
+    <br>
+    <p class="fragment small" style="color:#7ee787;">
+      This should be your central model and probably your most-cited paper.
+    </p>
+  </section>
+
+  <section>
+    <h2>NGCF vs LightGCN</h2>
+    <table style="font-size:0.65em;" class="vs-table">
+      <tr><th></th><th>NGCF</th><th>LightGCN</th></tr>
+      <tr><td>Feature transform</td><td>Yes (W matrix)</td><td class="highlight">No</td></tr>
+      <tr><td>Activation</td><td>LeakyReLU</td><td class="highlight">None</td></tr>
+      <tr><td>Self-connection</td><td>Yes</td><td class="highlight">No</td></tr>
+      <tr><td>Layer combination</td><td>Concatenation</td><td class="highlight">Weighted sum</td></tr>
+      <tr><td>Performance</td><td>Good</td><td class="highlight">Better</td></tr>
+      <tr><td>Parameters</td><td>More</td><td class="highlight">Fewer</td></tr>
+    </table>
+    <p class="fragment small">Simpler model, better results. A powerful research insight!</p>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 6: TRAINING & LOSS                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <section>
+    <h1>Phase 9</h1>
+    <h2>Training &amp; BPR Loss</h2>
+    <p class="subtitle">Week 6 — How to train your recommender</p>
+  </section>
+
+  <section>
+    <h2>Explicit vs Implicit Feedback</h2>
+    <div class="columns" style="font-size:0.75em;">
+      <div>
+        <h3>Explicit</h3>
+        <p>User gives a rating</p>
+        <div class="code-box">
+User → Movie: ★★★★☆
+Predict: rating = 4.73
+        </div>
+        <p class="dim">Sparse, not always available</p>
+      </div>
+      <div>
+        <h3 style="color:#7ee787;">Implicit</h3>
+        <p>User interacts (click, buy, watch)</p>
+        <div class="code-box">
+User → Movie: watched ✓
+Predict: will user watch? 0/1
+        </div>
+        <p style="color:#7ee787;">Abundant, more practical</p>
+      </div>
+    </div>
+    <p class="fragment small" style="color:#f0883e;">Most modern RecSys (including yours) uses implicit feedback.</p>
+  </section>
+
+  <section>
+    <h2>BPR — Bayesian Personalized Ranking</h2>
+    <p style="font-size:0.8em;">Instead of predicting a score, learn <span class="accent">relative preferences</span>:</p>
+    <div class="diagram-box">
+User <span class="node">U</span>
+
+  <span class="highlight">Positive:</span>  Movie A  (interacted)
+  <span class="accent">Negative:</span>  Movie B  (not interacted)
+
+We want:
+  ŷ<sub>u,A</sub>  &gt;  ŷ<sub>u,B</sub>
+    </div>
+  </section>
+
+  <section>
+    <h2>BPR Loss</h2>
+    <div class="math-block">
+      \( \mathcal{L}_{BPR} = -\sum_{(u,i,j)} \ln \sigma\!\left(\hat{y}_{ui} - \hat{y}_{uj}\right) \)
+    </div>
+    <br>
+    <div style="font-size:0.75em;">
+      <p><span class="accent">\(u\)</span> = user</p>
+      <p><span class="highlight">\(i\)</span> = positive item (interacted)</p>
+      <p><span class="dim">\(j\)</span> = negative item (sampled, not interacted)</p>
+      <p><span class="node">\(\sigma\)</span> = sigmoid function</p>
+    </div>
+    <p class="fragment small">Pushes positive items' scores above negative items' scores.</p>
+  </section>
+
+  <section>
+    <h2>Negative Sampling</h2>
+    <div style="font-size:0.8em;">
+      <p>For each (user, positive_item) pair, we sample negative items:</p>
+    </div>
+    <div class="diagram-box">
+User 1 interacted with: {A, C, E}
+
+<span class="highlight">Positive sample:</span>  (User 1, Movie A)
+<span class="accent">Negative sample:</span>  (User 1, Movie <span class="accent">B</span>)  ← randomly sampled
+                                    from items NOT in {A, C, E}
+    </div>
+    <p class="fragment small">Simple uniform sampling works. Some papers explore harder negatives.</p>
+  </section>
+
+  <section>
+    <h2>Training Pipeline</h2>
+    <div class="diagram-box">
+<span class="label">1.</span> Initialize user &amp; item embeddings randomly
+        │
+        ▼
+<span class="label">2.</span> For each epoch:
+    │   Sample (user, pos_item, neg_item) triplets
+    │          │
+    │          ▼
+    │   <span class="accent">Forward pass:</span> GNN propagation → embeddings
+    │          │
+    │          ▼
+    │   <span class="highlight">Compute BPR loss</span>
+    │          │
+    │          ▼
+    │   <span class="node">Backward pass:</span> update embeddings
+    │
+    └── Repeat
+        │
+        ▼
+<span class="label">3.</span> <span class="star">Evaluate with ranking metrics</span>
+    </div>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 7: EVALUATION                                 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <section>
+    <h1>Phase 11</h1>
+    <h2>Evaluation Metrics</h2>
+    <p class="subtitle">Week 7–8 — One of the most important parts of your thesis</p>
+  </section>
+
+  <section>
+    <h2>Recommendation is a Ranking Problem</h2>
+    <div style="font-size:0.8em;">
+      <p>Don't evaluate only with accuracy or MSE.</p>
+      <p class="fragment">Your model outputs a <span class="accent">ranked list</span> of items for each user.</p>
+    </div>
+    <div class="fragment diagram-box">
+K = 10
+
+Model recommends:  [<span class="highlight">A</span>, B, C, <span class="highlight">D</span>, E, F, G, <span class="highlight">H</span>, I, J]
+
+Actual relevant:   {<span class="highlight">A</span>, <span class="highlight">D</span>, <span class="highlight">H</span>}
+
+How good was the ranking?
+    </div>
+  </section>
+
+  <section>
+    <h2>Key Metrics</h2>
+    <div style="font-size:0.75em; text-align:left; max-width:80%; margin:auto;">
+      <p class="fragment"><span class="accent">Precision@K</span> = relevant items in top-K / K</p>
+      <p class="fragment"><span class="accent">Recall@K</span> = relevant items in top-K / total relevant items</p>
+      <p class="fragment"><span class="accent">Hit Rate@K</span> = 1 if any relevant item in top-K, else 0</p>
+      <p class="fragment"><span class="star">NDCG@K</span> = Normalized Discounted Cumulative Gain<br>
+        <span class="dim" style="margin-left:1em;">— rewards relevant items ranked higher</span></p>
+      <p class="fragment"><span class="accent">MAP</span> = Mean Average Precision</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>NDCG@K Deep Dive</h2>
+    <div style="font-size:0.7em;">
+      <p>Recommended list: [<span class="highlight">A</span>, B, C, <span class="highlight">D</span>, E, F, G, <span class="highlight">H</span>, I, J]</p>
+    </div>
+    <div class="math-block" style="font-size:0.85em;">
+      \( \text{DCG@K} = \sum_{k=1}^{K} \frac{rel_k}{\log_2(k+1)} \)
+    </div>
+    <div class="fragment" style="font-size:0.65em;">
+      <table>
+        <tr><th>Position</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>…</th><th>8</th></tr>
+        <tr><td>Item</td><td class="highlight">A</td><td>B</td><td>C</td><td class="highlight">D</td><td>E</td><td>…</td><td class="highlight">H</td></tr>
+        <tr><td>Relevant?</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>…</td><td>1</td></tr>
+        <tr><td>1/log₂(k+1)</td><td>1.0</td><td>0.63</td><td>0.5</td><td>0.43</td><td>0.39</td><td>…</td><td>0.29</td></tr>
+      </table>
+    </div>
+    <p class="fragment small">NDCG = DCG / ideal DCG. Relevant items at <em>top</em> positions score highest.</p>
+  </section>
+
+  <section>
+    <h2>Your BTP Results Table</h2>
+    <table style="font-size:0.75em;">
+      <tr><th>Model</th><th>Recall@10</th><th>NDCG@10</th><th>Recall@20</th><th>NDCG@20</th></tr>
+      <tr><td>Popularity</td><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+      <tr><td>MF</td><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+      <tr><td>GCN</td><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+      <tr style="color:#7ee787;"><td>LightGCN</td><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+      <tr style="color:#f0883e;"><td>Your Model</td><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+    </table>
+    <p class="fragment small">This is the core results table of your thesis. Everything builds toward filling this in.</p>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 8: BTP RESEARCH                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<section>
+  <section>
+    <h1>Phase 13–16</h1>
+    <h2>Your BTP Research</h2>
+    <p class="subtitle">Week 8–12 — From project to thesis</p>
+  </section>
+
+  <section>
+    <h2>Research Questions</h2>
+    <div style="font-size:0.75em; text-align:left; max-width:85%; margin:auto;">
+      <p class="fragment"><span class="accent">RQ1:</span> Does graph-based CF outperform traditional matrix factorization?</p>
+      <p class="fragment"><span class="accent">RQ2:</span> How does graph depth (number of GNN layers) affect recommendation quality?</p>
+      <p class="fragment"><span class="accent">RQ3:</span> Does incorporating item metadata improve GNN recommendation?</p>
+      <p class="fragment"><span class="accent">RQ4:</span> How does graph sparsity affect GNN recommendation performance?</p>
+      <p class="fragment"><span class="accent">RQ5:</span> Can heterogeneous graphs improve recommendation vs. user-item-only graphs?</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Experimental Design</h2>
+    <div class="columns" style="font-size:0.65em;">
+      <div>
+        <h3>Exp 1: Model Comparison</h3>
+        <ul>
+          <li>Popularity</li>
+          <li>MF</li>
+          <li>GCN</li>
+          <li>GraphSAGE</li>
+          <li>LightGCN</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Exp 2: GNN Depth</h3>
+        <ul>
+          <li>1 layer</li>
+          <li>2 layers</li>
+          <li>3 layers</li>
+          <li>4 layers</li>
+          <li>5 layers</li>
+        </ul>
+        <p class="dim">→ Oversmoothing analysis</p>
+      </div>
+      <div>
+        <h3>Exp 3: Embedding Dim</h3>
+        <ul>
+          <li>16</li>
+          <li>32</li>
+          <li>64</li>
+          <li>128</li>
+          <li>256</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Exp 4: Data Sparsity</h3>
+        <ul>
+          <li>100%</li>
+          <li>75%</li>
+          <li>50%</li>
+          <li>25%</li>
+          <li>10%</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Advanced Directions (Choose ONE)</h2>
+    <div class="columns" style="font-size:0.65em;">
+      <div>
+        <h3 style="color:#f0883e;">A. Heterogeneous GNN</h3>
+        <div class="diagram-box" style="font-size:1em;">
+User → Movie → Genre
+         ↓
+       Actor
+        </div>
+      </div>
+      <div>
+        <h3 style="color:#f0883e;">B. Explainability</h3>
+        <p>Why was this item recommended?<br>Attention weights, path analysis</p>
+      </div>
+      <div>
+        <h3 style="color:#f0883e;">C. Cold Start</h3>
+        <p>New user/item with no history.<br>Use side information via GNN.</p>
+      </div>
+      <div>
+        <h3 style="color:#f0883e;">D. Temporal</h3>
+        <p>Interactions at t₁, t₂, t₃.<br>Learn evolving preferences.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The Novelty Formula</h2>
+    <div class="key-insight" style="font-size:0.85em;">
+      <p>Take <span class="accent">established model</span> → identify <span class="star">limitation</span> → propose <span class="highlight">modification</span> → experimentally evaluate</p>
+    </div>
+    <br>
+    <div class="fragment" style="font-size:0.75em;">
+      <p><strong>Example:</strong></p>
+      <p><span class="accent">Existing:</span> LightGCN (only user-item structure)</p>
+      <p><span class="star">Limitation:</span> No item metadata used</p>
+      <p><span class="highlight">Your idea:</span> Add Genre/Category edges</p>
+      <p><span class="dim">Question:</span> Does side information improve recommendation under sparse interactions?</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Thesis Structure</h2>
+    <div class="diagram-box" style="font-size:0.95em;">
+ 1. Problem Definition
+ 2. Recommendation System Background
+ 3. Collaborative Filtering Baseline
+ 4. Graph Formulation
+ 5. GNN Methodology
+ 6. LightGCN / Chosen Model
+ 7. <span class="accent">Proposed Improvement</span>
+ 8. Experimental Setup
+ 9. Baseline Comparisons
+10. <span class="highlight">Ablation Studies</span>
+11. Results
+12. Error Analysis
+13. Limitations
+14. Future Work
+    </div>
+  </section>
+
+  <section>
+    <h2>Papers to Read</h2>
+    <div style="font-size:0.7em; text-align:left; max-width:80%; margin:auto;">
+      <p><span class="pill">Foundation</span> Collaborative Filtering / Matrix Factorization</p>
+      <p><span class="pill">Foundation</span> GCN — Kipf &amp; Welling, 2017</p>
+      <p><span class="pill orange">Core</span> NGCF — Wang et al., 2019</p>
+      <p><span class="pill" style="background:#e3b34133; border-color:#e3b341;">★ Central</span> LightGCN — He et al., 2020</p>
+      <p><span class="pill green">Explore</span> PinSage — Ying et al., 2018</p>
+      <p><span class="pill green">Explore</span> UltraGCN — Mao et al., 2021</p>
+      <p><span class="pill green">Explore</span> Heterogeneous / Sequential GNN RecSys</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Final System Architecture</h2>
+    <div class="diagram-box">
+               <span class="label">DATA</span>
+                 │
+                 ▼
+          <span class="node">User–Item Graph</span>
+                 │
+         ┌───────┴────────┐
+         ▼                ▼
+     <span class="node">User Nodes</span>       <span class="accent">Item Nodes</span>
+         │                │
+         └──────┬─────────┘
+                ▼
+           <span class="star">LightGCN</span>
+                │
+                ▼
+      <span class="highlight">User/Item Embeddings</span>
+                │
+                ▼
+        <span class="accent">BPR Optimization</span>
+                │
+                ▼
+       Candidate Scoring
+                │
+                ▼
+          <span class="star">Top-K Items</span>
+                │
+                ▼
+       <span class="highlight">Recommendation</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tech Stack</h2>
+    <div class="diagram-box">
+<span class="highlight">Python</span>
+  │
+  ├── NumPy
+  ├── Pandas
+  ├── Scikit-learn
+  ├── <span class="accent">PyTorch</span>
+  ├── <span class="star">PyTorch Geometric</span>
+  ├── NetworkX
+  └── Matplotlib
+    </div>
+    <p class="small dim">Keep it simple. Don't waste BTP time on infrastructure.</p>
+  </section>
+
+  <section>
+    <h2>What Matters Most</h2>
+    <div class="key-insight" style="font-size:0.9em;">
+      <p>Deeply understand this chain:</p>
+      <p style="font-size:0.8em; color:#7ee787;">
+        Matrix Factorization → GCN → Message Passing →<br>
+        NGCF → <strong>LightGCN</strong> → BPR → Recall/NDCG →<br>
+        Experimental Methodology
+      </p>
+      <br>
+      <p style="font-size:0.75em; color:#8b949e;">
+        This is worth more than superficially knowing 30 GNN architectures.
+      </p>
+    </div>
+  </section>
+</section>
+
+<!-- END -->
+<section>
+  <h1>Now Go Build It</h1>
+  <p style="font-size:0.9em;">
+    <span class="dim">~8–10 weeks</span> for the first complete recommender<br>
+    <span class="dim">Remaining time</span> for experiments, improvements, writing
+  </p>
+  <br>
+  <p class="small" style="color:#58a6ff;">Good luck with your BTP!</p>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: true,
+    transition: 'slide',
+    backgroundTransition: 'fade',
+    center: true,
+    width: 1280,
+    height: 720,
+    margin: 0.04,
+    minScale: 0.2,
+    maxScale: 2.0,
+    plugins: [ RevealHighlight ]
+  });
+</script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+    svg: { fontCache: 'global' },
+    startup: {
+      ready: () => {
+        MathJax.startup.defaultReady();
+        Reveal.layout();
+      }
+    }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</body>
+</html>

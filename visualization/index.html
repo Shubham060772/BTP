@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdaFuse — BTP Research Overview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --bg3: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #1a1a2e;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --orange: #f97316;
+    --pink: #ec4899;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --border: #1e293b;
+    --glow: rgba(0, 212, 255, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent2) var(--bg);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* Animated background */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: 0;
+    animation: gridMove 20s linear infinite;
+  }
+
+  @keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+  }
+
+  .bg-gradient {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 20% 20%, rgba(124,58,237,0.08), transparent),
+      radial-gradient(ellipse 600px 400px at 80% 80%, rgba(0,212,255,0.06), transparent);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Navigation */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .nav-logo {
+    font-weight: 800;
+    font-size: 1.2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .nav-links a {
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .nav-links a:hover, .nav-links a.active {
+    color: var(--accent);
+    background: var(--glow);
+  }
+
+  /* Sections */
+  section {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 6rem 2rem 2rem;
+  }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 64px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(124,58,237,0.15);
+    border: 1px solid rgba(124,58,237,0.3);
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #a78bfa;
+    margin-bottom: 2rem;
+    width: fit-content;
+    animation: fadeSlideUp 0.6s ease;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    margin-bottom: 1.5rem;
+    animation: fadeSlideUp 0.6s ease 0.1s both;
+  }
+
+  .hero h1 .gradient {
+    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+    animation: gradientShift 4s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .hero-subtitle {
+    font-size: 1.2rem;
+    color: var(--text2);
+    max-width: 700px;
+    line-height: 1.7;
+    animation: fadeSlideUp 0.6s ease 0.2s both;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 3rem;
+    animation: fadeSlideUp 0.6s ease 0.3s both;
+  }
+
+  .hero-stat {
+    text-align: left;
+  }
+
+  .hero-stat .num {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-stat .label {
+    font-size: 0.82rem;
+    color: var(--text3);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Section headers */
+  .section-header {
+    margin-bottom: 3rem;
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-header h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.2;
+  }
+
+  .section-header p {
+    color: var(--text2);
+    font-size: 1.05rem;
+    margin-top: 0.75rem;
+    max-width: 600px;
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 3rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent2), var(--pink), transparent);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.5s ease;
+  }
+
+  .timeline-item.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -3rem;
+    top: 0.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--bg);
+    transform: translateX(-5px);
+  }
+
+  .timeline-item .year {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .timeline-item h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+
+  .timeline-item .venue {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+  }
+
+  .venue-ieee { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .venue-acm { background: rgba(0,212,255,0.15); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .venue-other { background: rgba(245,158,11,0.15); color: var(--accent3); border: 1px solid rgba(245,158,11,0.3); }
+
+  .timeline-item .desc {
+    color: var(--text2);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .timeline-item .flaw {
+    margin-top: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    background: rgba(239,68,68,0.08);
+    border-left: 3px solid var(--red);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82rem;
+    color: #fca5a5;
+  }
+
+  .timeline-item .flaw strong {
+    color: var(--red);
+  }
+
+  /* Paper Cards Grid */
+  .paper-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .paper-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .paper-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .paper-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 30px var(--glow);
+    transform: translateY(-4px);
+  }
+
+  .paper-card .pc-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+
+  .paper-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    flex: 1;
+    line-height: 1.3;
+  }
+
+  .paper-card .pc-year {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+    margin-left: 0.75rem;
+  }
+
+  .paper-card .pc-venue {
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+  }
+
+  .paper-card .pc-method {
+    font-size: 0.85rem;
+    color: var(--text2);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .paper-card .pc-flaw {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.15);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .pc-flaw-label {
+    color: var(--red);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+  }
+
+  .pc-flaw p {
+    color: #fca5a5;
+    line-height: 1.4;
+  }
+
+  /* Gap section */
+  .gap-container {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 0;
+    align-items: stretch;
+    margin-top: 2rem;
+  }
+
+  .gap-left, .gap-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .gap-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gap-arrow {
+    font-size: 2rem;
+    color: var(--green);
+    animation: pulseArrow 2s ease infinite;
+  }
+
+  @keyframes pulseArrow {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .flaw-box {
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: all 0.5s ease;
+  }
+
+  .flaw-box.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .flaw-box .fb-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.4rem;
+  }
+
+  .flaw-box h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .flaw-box p {
+    font-size: 0.82rem;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+
+  .fix-box {
+    background: rgba(16,185,129,0.06);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    opacity: 0;
+    transform: translateX(30px);
+    transition: all 0.5s ease;
+  }
+
+  .fix-box.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .fix-box .fb-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.4rem;
+  }
+
+  .fix-box h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .fix-box p {
+    font-size: 0.82rem;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+
+  /* Architecture diagram */
+  .arch-container {
+    margin-top: 2rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arch-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,212,255,0.03), transparent);
+    pointer-events: none;
+  }
+
+  .arch-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .arch-row {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .arch-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    min-width: 220px;
+    text-align: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  .arch-box.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .arch-box:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 25px var(--glow);
+  }
+
+  .arch-box.transformer {
+    border-color: rgba(124,58,237,0.4);
+    background: rgba(124,58,237,0.08);
+  }
+
+  .arch-box.gnn {
+    border-color: rgba(0,212,255,0.4);
+    background: rgba(0,212,255,0.08);
+  }
+
+  .arch-box.fusion {
+    border-color: rgba(16,185,129,0.4);
+    background: rgba(16,185,129,0.08);
+    min-width: 400px;
+  }
+
+  .arch-box.output {
+    border-color: rgba(245,158,11,0.4);
+    background: rgba(245,158,11,0.08);
+  }
+
+  .arch-box .ab-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .arch-box h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+  }
+
+  .arch-box .ab-desc {
+    font-size: 0.78rem;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+
+  .arch-box .ab-math {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    margin-top: 0.5rem;
+    background: rgba(0,0,0,0.3);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .arch-connector {
+    width: 2px;
+    height: 30px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent2));
+    position: relative;
+  }
+
+  .arch-connector::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--accent2);
+  }
+
+  .arch-split {
+    display: flex;
+    align-items: flex-start;
+    gap: 3rem;
+    position: relative;
+  }
+
+  .arch-split::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 25%;
+    right: 25%;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .arch-merge-lines {
+    display: flex;
+    justify-content: center;
+    gap: 12rem;
+    position: relative;
+  }
+
+  .arch-merge-lines::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 25%;
+    right: 25%;
+    height: 2px;
+    background: var(--green);
+  }
+
+  /* Comparison table */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+    font-size: 0.85rem;
+  }
+
+  .comp-table th {
+    background: var(--bg3);
+    padding: 0.8rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+    border-bottom: 2px solid var(--border);
+  }
+
+  .comp-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .comp-table tr:hover td {
+    background: rgba(0,212,255,0.03);
+  }
+
+  .comp-table .highlight-row td {
+    background: rgba(16,185,129,0.06);
+    border-bottom: 1px solid rgba(16,185,129,0.2);
+  }
+
+  .comp-table .highlight-row td:first-child {
+    font-weight: 700;
+    color: var(--green);
+  }
+
+  .metric-bar {
+    display: inline-block;
+    height: 6px;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  /* RQ Cards */
+  .rq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .rq-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .rq-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .rq-card:hover {
+    border-color: var(--accent2);
+    box-shadow: 0 0 30px rgba(124,58,237,0.1);
+  }
+
+  .rq-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent2);
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+  }
+
+  .rq-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .rq-card p {
+    font-size: 0.85rem;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  /* Implementation timeline */
+  .impl-timeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .impl-week {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .impl-week.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .impl-week:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--glow);
+  }
+
+  .impl-week .iw-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .impl-week h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .impl-week ul {
+    list-style: none;
+    font-size: 0.78rem;
+    color: var(--text2);
+  }
+
+  .impl-week ul li {
+    padding: 0.2rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .impl-week ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55rem;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* Performance chart */
+  .perf-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5rem;
+    height: 300px;
+    margin-top: 2rem;
+    padding: 2rem 1rem 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+  }
+
+  .perf-chart::before {
+    content: 'Expected Recall@20 on Amazon-Beauty';
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text3);
+    font-weight: 600;
+  }
+
+  .perf-bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .perf-bar {
+    width: 60%;
+    border-radius: 6px 6px 0 0;
+    position: relative;
+    transition: height 1s ease;
+    min-height: 0;
+  }
+
+  .perf-bar .pb-val {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .perf-bar-label {
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text2);
+    text-align: center;
+    padding-bottom: 0.75rem;
+  }
+
+  /* Scroll animations */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Footer */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text3);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--border);
+    margin-top: 4rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; letter-spacing: -1px; }
+    .hero-stats { flex-wrap: wrap; gap: 1.5rem; }
+    .gap-container { grid-template-columns: 1fr; }
+    .gap-center { flex-direction: row; padding: 1rem 0; }
+    .gap-arrow { transform: rotate(90deg); }
+    .impl-timeline { grid-template-columns: 1fr 1fr; }
+    .arch-split { flex-direction: column; gap: 1rem; }
+    .arch-box.fusion { min-width: auto; }
+    .paper-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+
+  /* Floating particles */
+  .particle {
+    position: fixed;
+    width: 3px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    animation: floatParticle 8s ease-in-out infinite;
+  }
+
+  @keyframes floatParticle {
+    0% { opacity: 0; transform: translateY(100vh) scale(0); }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.6; }
+    100% { opacity: 0; transform: translateY(-100px) scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-gradient"></div>
+
+<!-- Floating particles -->
+<div class="particle" style="left:10%; animation-delay:0s; animation-duration:7s;"></div>
+<div class="particle" style="left:25%; animation-delay:2s; animation-duration:9s;"></div>
+<div class="particle" style="left:50%; animation-delay:4s; animation-duration:6s;"></div>
+<div class="particle" style="left:75%; animation-delay:1s; animation-duration:8s;"></div>
+<div class="particle" style="left:90%; animation-delay:3s; animation-duration:10s;"></div>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">AdaFuse Research</div>
+    <div class="nav-links">
+      <a href="#hero" class="active">Home</a>
+      <a href="#evolution">Evolution</a>
+      <a href="#papers">Papers</a>
+      <a href="#flaws">Flaws & Fixes</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#research">Research</a>
+      <a href="#plan">Plan</a>
+      <a href="#results">Results</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero" id="hero">
+  <div class="hero-badge">IIT Patna &middot; Bachelor's Thesis Project &middot; 2026</div>
+  <h1>
+    <span class="gradient">AdaFuse</span><br>
+    Adaptive Fusion of<br>
+    Transformers & GNNs<br>
+    for Recommendation
+  </h1>
+  <p class="hero-subtitle">
+    A hybrid recommendation model that adaptively combines sequential patterns (Transformer/SASRec) with collaborative signals (GNN/LightGCN) through a learned per-user attention gate &mdash; extending SASGCN (IEEE 2024).
+  </p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="num">26+</div>
+      <div class="label">Papers Surveyed</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">5</div>
+      <div class="label">IEEE Papers</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">7</div>
+      <div class="label">Baselines</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">8</div>
+      <div class="label">Week Plan</div>
+    </div>
+  </div>
+</section>
+
+<!-- Evolution Timeline -->
+<section id="evolution">
+  <div class="section-header">
+    <div class="section-num">01 &mdash; Evolution</div>
+    <h2>How We Got Here</h2>
+    <p>The journey from basic collaborative filtering to hybrid Transformer-GNN models.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="timeline-item" data-delay="0">
+      <div class="year">2009</div>
+      <h3>Matrix Factorization & BPR</h3>
+      <span class="venue venue-other">UAI / IEEE Computer</span>
+      <p class="desc">Koren et al. and Rendle et al. establish MF and pairwise ranking for implicit feedback. The foundation of modern recommender systems.</p>
+      <div class="flaw"><strong>Limitation:</strong> Linear, no higher-order user-item relationships. Cannot capture complex behavioral patterns.</div>
+    </div>
+
+    <div class="timeline-item" data-delay="100">
+      <div class="year">2017-2018</div>
+      <h3>Attention & Sequential Models</h3>
+      <span class="venue venue-ieee">IEEE ICDM 2018</span>
+      <p class="desc"><strong>SASRec</strong> applies causal self-attention to user interaction sequences. Learns which past items matter for predicting the next one. BERT4Rec (CIKM 2019) adds bidirectional attention with masked prediction.</p>
+      <div class="flaw"><strong>Limitation:</strong> Processes each user independently. No collaborative signal from similar users. Needs dense interaction history to work well.</div>
+    </div>
+
+    <div class="timeline-item" data-delay="200">
+      <div class="year">2019-2020</div>
+      <h3>GNN-based Collaborative Filtering</h3>
+      <span class="venue venue-acm">ACM SIGIR 2020</span>
+      <p class="desc"><strong>LightGCN</strong> removes all neural components from GCN (no transforms, no activations) and shows that pure neighborhood aggregation is all you need. 16-22% better than NGCF.</p>
+      <div class="flaw"><strong>Limitation:</strong> No sequential modeling. Treats interaction history as a set. Uniform layer weights &mdash; not personalized. Ignores metadata.</div>
+    </div>
+
+    <div class="timeline-item" data-delay="300">
+      <div class="year">2021-2023</div>
+      <h3>Contrastive Learning Era</h3>
+      <span class="venue venue-acm">ICLR / SIGIR / TKDE</span>
+      <p class="desc"><strong>SGL, SimGCL, LightGCL</strong> add self-supervised contrastive objectives to GNN-CF. LightGCL (ICLR 2023) achieves 83% improvement over LightGCN on Amazon-Book using SVD-based augmentation.</p>
+      <div class="flaw"><strong>Limitation:</strong> Still no sequential modeling. Still no Transformer component. Purely graph-based collaborative filtering.</div>
+    </div>
+
+    <div class="timeline-item" data-delay="400">
+      <div class="year">2024</div>
+      <h3>First Hybrid: SASGCN</h3>
+      <span class="venue venue-ieee">IEEE Access 2024</span>
+      <p class="desc"><strong>SASGCN</strong> combines SASRec + GCN for the first time. Uses GCN for collaborative signal and self-attention for sequential patterns.</p>
+      <div class="flaw"><strong>Limitation:</strong> Uses vanilla GCN (not LightGCN). Static concatenation+MLP fusion &mdash; same fusion strategy for all users. No analysis of when each signal helps. Only 5 citations.</div>
+    </div>
+
+    <div class="timeline-item" data-delay="500">
+      <div class="year">2026</div>
+      <h3>Our Proposal: AdaFuse</h3>
+      <span class="venue" style="background:rgba(16,185,129,0.2);color:var(--green);border:1px solid rgba(16,185,129,0.4);">PROPOSED</span>
+      <p class="desc"><strong>AdaFuse</strong> upgrades SASGCN with LightGCN (proven superior), replaces static fusion with a learned per-user attention gate, and analyzes when sequential vs. collaborative signals dominate.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Paper Cards -->
+<section id="papers">
+  <div class="section-header">
+    <div class="section-num">02 &mdash; Key Papers</div>
+    <h2>Papers That Define the Landscape</h2>
+    <p>The most important papers we surveyed, with their verified publication details and identified limitations.</p>
+  </div>
+
+  <div class="paper-grid">
+
+    <div class="paper-card" data-delay="0">
+      <div class="pc-head">
+        <h4>SASRec</h4>
+        <span class="pc-year">2018</span>
+      </div>
+      <span class="pc-venue venue-ieee">IEEE ICDM</span>
+      <p class="pc-method">Causal self-attention over item sequences. Balances long-term preferences with short-term intent through positional embeddings and multi-head attention.</p>
+      <div class="pc-flaw">
+        <div class="pc-flaw-label">Limitation</div>
+        <p>Each user encoded in isolation. No information flows between users &mdash; misses collaborative signal entirely.</p>
+      </div>
+    </div>
+
+    <div class="paper-card" data-delay="100">
+      <div class="pc-head">
+        <h4>BERT4Rec</h4>
+        <span class="pc-year">2019</span>
+      </div>
+      <span class="pc-venue venue-acm">ACM CIKM</span>
+      <p class="pc-method">Bidirectional Transformer with Cloze (masked item prediction) objective. Sees future context during training.</p>
+      <div class="pc-flaw">
+        <div class="pc-flaw-label">Limitation</div>
+        <p>Train-test mismatch (masks during training, predicts future at test). Needs 30x training time. Highly sensitive to mask ratio.</p>
+      </div>
+    </div>
+
+    <div class="paper-card" data-delay="200">
+      <div class="pc-head">
+        <h4>LightGCN</h4>
+        <span class="pc-year">2020</span>
+      </div>
+      <span class="pc-venue venue-acm">ACM SIGIR</span>
+      <p class="pc-method">Removes feature transforms and nonlinear activations from GCN. Only neighborhood aggregation + layer combination. Simple yet powerful.</p>
+      <div class="pc-flaw">
+        <div class="pc-flaw-label">Limitation</div>
+        <p>No sequential modeling. Uniform layer weights (not personalized). Authors suggest per-user layer attention as future work.</p>
+      </div>
+    </div>
+
+    <div class="paper-card" data-delay="300">
+      <div class="pc-head">
+        <h4>SASGCN</h4>
+        <span class="pc-year">2024</span>
+      </div>
+      <span class="pc-venue venue-ieee">IEEE Access</span>
+      <p class="pc-method">First combination of SASRec + GCN. GCN captures collaborative patterns; self-attention captures sequential interests. Simple concatenation+MLP fusion.</p>
+      <div class="pc-flaw">
+        <div class="pc-flaw-label">Limitation &mdash; Our Target</div>
+        <p>Uses vanilla GCN (not LightGCN). Static fusion treats all users identically. No sparsity analysis. No study of when each signal helps.</p>
+      </div>
+    </div>
+
+    <div class="paper-card" data-delay="400">
+      <div class="pc-head">
+        <h4>SG-MST</h4>
+        <span class="pc-year">2024</span>
+      </div>
+      <span class="pc-venue venue-ieee">IEEE ICDM</span>
+      <p class="pc-method">Hypergraph-enhanced contrastive Transformer for multi-behavior e-commerce. Models views, clicks, carts, and purchases separately.</p>
+      <div class="pc-flaw">
+        <div class="pc-flaw-label">Limitation</div>
+        <p>Requires multi-behavior datasets. Complex hypergraph construction. Contrastive regularization adds hyperparameters.</p>
+      </div>
+    </div>
+
+    <div class="paper-card" data-delay="500">
+      <div class="pc-head">
+        <h4>TGT</h4>
+        <span class="pc-year">2022</span>
+      </div>
+      <span class="pc-venue venue-ieee">IEEE TKDE</span>
+      <p class="pc-method">Temporal Graph Transformer for multi-behavior sequential recommendation. Captures dynamic short/long-range patterns across behaviors.</p>
+      <div class="pc-flaw">
+        <div class="pc-flaw-label">Limitation</div>
+        <p>Requires multi-behavior data. Complex temporal encoding. Difficult to reproduce.</p>
+      </div>
+    </div>
+
+    <div class="paper-card" data-delay="600">
+      <div class="pc-head">
+        <h4>MGUI</h4>
+        <span class="pc-year">2026</span>
+      </div>
+      <span class="pc-venue venue-ieee">IEEE TCSS</span>
+      <p class="pc-method">Multi-grained user interests with item-transition graph propagation and user-specific mixture-of-experts for sequential recommendation.</p>
+      <div class="pc-flaw">
+        <div class="pc-flaw-label">Limitation</div>
+        <p>MoE adds complexity. Item-transition graph is computed from sequences (no bipartite user-item graph). Very recent &mdash; limited reproducibility info.</p>
+      </div>
+    </div>
+
+    <div class="paper-card" data-delay="700">
+      <div class="pc-head">
+        <h4>LightGCL</h4>
+        <span class="pc-year">2023</span>
+      </div>
+      <span class="pc-venue venue-other">ICLR</span>
+      <p class="pc-method">SVD-based deterministic graph augmentation for contrastive learning. Current SOTA on Amazon-Book (Recall@20=0.0585).</p>
+      <div class="pc-flaw">
+        <div class="pc-flaw-label">Limitation</div>
+        <p>No sequential component at all. Purely collaborative. Single augmentation view. Uniform spectral treatment.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Flaws & Our Fixes -->
+<section id="flaws">
+  <div class="section-header">
+    <div class="section-num">03 &mdash; Flaws & Fixes</div>
+    <h2>What's Broken & How We Fix It</h2>
+    <p>Specific limitations in prior work and our targeted solutions.</p>
+  </div>
+
+  <div class="gap-container">
+    <div class="gap-left">
+      <div class="flaw-box" data-delay="0">
+        <div class="fb-label">Flaw 1 &mdash; SASGCN</div>
+        <h4>Vanilla GCN Instead of LightGCN</h4>
+        <p>SASGCN uses vanilla GCN with feature transforms and activations. LightGCN proved these hurt CF performance (16-22% worse). Using the wrong GNN backbone limits the collaborative signal quality.</p>
+      </div>
+
+      <div class="flaw-box" data-delay="200">
+        <div class="fb-label">Flaw 2 &mdash; SASGCN</div>
+        <h4>Static Fusion for All Users</h4>
+        <p>Concatenation + MLP gives every user the same fusion strategy. But a user with 3 interactions needs different treatment than one with 300. Static fusion can't adapt.</p>
+      </div>
+
+      <div class="flaw-box" data-delay="400">
+        <div class="fb-label">Flaw 3 &mdash; SASRec</div>
+        <h4>No Collaborative Signal</h4>
+        <p>SASRec processes each user independently. A new user with 2 interactions gets terrible recommendations because there's no information from similar users.</p>
+      </div>
+
+      <div class="flaw-box" data-delay="600">
+        <div class="fb-label">Flaw 4 &mdash; LightGCN</div>
+        <h4>No Sequential Awareness</h4>
+        <p>LightGCN treats the interaction history as a set. Buying "Laptop, Mouse, Keyboard" in that order or any other order produces identical recommendations. Recent intent is lost.</p>
+      </div>
+
+      <div class="flaw-box" data-delay="800">
+        <div class="fb-label">Flaw 5 &mdash; All Prior Hybrids</div>
+        <h4>No Sparsity-Stratified Analysis</h4>
+        <p>No paper systematically analyzes when sequential signal dominates vs. when collaborative signal dominates across different user activity levels.</p>
+      </div>
+    </div>
+
+    <div class="gap-center">
+      <div class="gap-arrow">&#10132;</div>
+      <div class="gap-arrow" style="animation-delay:0.5s;">&#10132;</div>
+      <div class="gap-arrow" style="animation-delay:1s;">&#10132;</div>
+      <div class="gap-arrow" style="animation-delay:1.5s;">&#10132;</div>
+      <div class="gap-arrow" style="animation-delay:2s;">&#10132;</div>
+    </div>
+
+    <div class="gap-right">
+      <div class="fix-box" data-delay="100">
+        <div class="fb-label">Fix 1 &mdash; AdaFuse</div>
+        <h4>LightGCN as GNN Backbone</h4>
+        <p>Replace vanilla GCN with LightGCN. Pure aggregation without transforms or activations. Proven 16-22% better for recommendation tasks.</p>
+      </div>
+
+      <div class="fix-box" data-delay="300">
+        <div class="fb-label">Fix 2 &mdash; AdaFuse</div>
+        <h4>Learned Per-User Attention Gate</h4>
+        <p>&alpha;(u) = &sigma;(w<sup>T</sup> &middot; [e<sub>seq</sub>; e<sub>col</sub>; e<sub>seq</sub> &odot; e<sub>col</sub>]). Each user gets a personalized fusion weight. The model learns who needs what.</p>
+      </div>
+
+      <div class="fix-box" data-delay="500">
+        <div class="fb-label">Fix 3 &mdash; AdaFuse</div>
+        <h4>GNN Branch Provides Collaboration</h4>
+        <p>LightGCN propagates information through the user-item graph. Even users with few interactions inherit rich representations from their graph neighborhood.</p>
+      </div>
+
+      <div class="fix-box" data-delay="700">
+        <div class="fb-label">Fix 4 &mdash; AdaFuse</div>
+        <h4>Transformer Branch Models Sequences</h4>
+        <p>SASRec captures temporal patterns and recent intent. "Laptop &rarr; Mouse &rarr; Keyboard &rarr; ?" uses attention to predict the next likely item.</p>
+      </div>
+
+      <div class="fix-box" data-delay="900">
+        <div class="fb-label">Fix 5 &mdash; AdaFuse</div>
+        <h4>Sparsity-Stratified Evaluation</h4>
+        <p>Group users by interaction count. Report per-group metrics. Analyze &alpha; vs. density. Show that sparse users lean on GNN, active users lean on Transformer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section id="architecture">
+  <div class="section-header">
+    <div class="section-num">04 &mdash; Architecture</div>
+    <h2>AdaFuse Model Design</h2>
+    <p>Adaptive attention fusion of sequential and collaborative representations.</p>
+  </div>
+
+  <div class="arch-container">
+    <div class="arch-flow">
+
+      <!-- Input -->
+      <div class="arch-row">
+        <div class="arch-box visible" style="min-width:500px; background:rgba(100,116,139,0.08); border-color:rgba(100,116,139,0.3);">
+          <div class="ab-icon">&#128218;</div>
+          <h4>Input Data</h4>
+          <div class="ab-desc">User interaction sequence S<sub>u</sub> = [i<sub>1</sub>, i<sub>2</sub>, ..., i<sub>t</sub>] + User-Item Graph G = (U &cup; I, E)</div>
+        </div>
+      </div>
+
+      <div class="arch-connector"></div>
+
+      <!-- Two branches -->
+      <div class="arch-row" style="gap:4rem;">
+        <div class="arch-box transformer" data-delay="200">
+          <div class="ab-icon">&#9889;</div>
+          <h4>SASRec (Transformer)</h4>
+          <div class="ab-desc">Causal self-attention over item sequence. Learns temporal patterns and recent user intent.</div>
+          <div class="ab-math">e<sub>seq</sub>(u) = SASRec(S<sub>u</sub>)</div>
+        </div>
+
+        <div class="arch-box gnn" data-delay="400">
+          <div class="ab-icon">&#127760;</div>
+          <h4>LightGCN (GNN)</h4>
+          <div class="ab-desc">Multi-hop neighborhood propagation. Captures collaborative patterns from similar users.</div>
+          <div class="ab-math">e<sub>col</sub>(u) = LightGCN(G)</div>
+        </div>
+      </div>
+
+      <div class="arch-connector"></div>
+
+      <!-- Fusion gate -->
+      <div class="arch-row">
+        <div class="arch-box fusion" data-delay="600">
+          <div class="ab-icon">&#9878;</div>
+          <h4>Adaptive Attention Fusion Gate</h4>
+          <div class="ab-desc">Per-user learned weight decides how much sequential vs. collaborative signal to use. Sparse users get more GNN; active users get more Transformer.</div>
+          <div class="ab-math">&alpha;(u) = &sigma;(w<sup>T</sup> &middot; [e<sub>seq</sub>; e<sub>col</sub>; e<sub>seq</sub> &odot; e<sub>col</sub>]) &nbsp;&nbsp;|&nbsp;&nbsp; e<sub>final</sub> = &alpha; &middot; e<sub>seq</sub> + (1-&alpha;) &middot; e<sub>col</sub></div>
+        </div>
+      </div>
+
+      <div class="arch-connector"></div>
+
+      <!-- Output -->
+      <div class="arch-row">
+        <div class="arch-box output" data-delay="800">
+          <div class="ab-icon">&#127919;</div>
+          <h4>BPR Ranking</h4>
+          <div class="ab-desc">Score items using fused representation. Train with Bayesian Personalized Ranking loss.</div>
+          <div class="ab-math">L = L<sub>BPR</sub> + &lambda; &middot; ||&Theta;||&sup2;</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Research Questions -->
+<section id="research">
+  <div class="section-header">
+    <div class="section-num">05 &mdash; Research Questions</div>
+    <h2>What We're Investigating</h2>
+    <p>Four specific, testable research questions that drive the experiments.</p>
+  </div>
+
+  <div class="rq-grid">
+    <div class="rq-card" data-delay="0">
+      <div class="rq-num">RQ 1 &mdash; Performance</div>
+      <h4>Does adaptive fusion beat static fusion?</h4>
+      <p>Does AdaFuse's attention-based adaptive fusion outperform SASGCN's static concatenation+MLP fusion, and individual SASRec and LightGCN baselines?</p>
+    </div>
+
+    <div class="rq-card" data-delay="150">
+      <div class="rq-num">RQ 2 &mdash; Interpretability</div>
+      <h4>Does fusion weight correlate with user activity?</h4>
+      <p>How does the learned fusion weight &alpha;(u) correlate with user interaction density? Do sparse users rely more on GNN collaborative signal?</p>
+    </div>
+
+    <div class="rq-card" data-delay="300">
+      <div class="rq-num">RQ 3 &mdash; Ablation</div>
+      <h4>What does each component contribute?</h4>
+      <p>What is the individual contribution of the Transformer branch, the GNN branch, the attention gate, and the element-wise interaction term?</p>
+    </div>
+
+    <div class="rq-card" data-delay="450">
+      <div class="rq-num">RQ 4 &mdash; Robustness</div>
+      <h4>How does it handle data sparsity?</h4>
+      <p>How does AdaFuse perform under varying training data density (100% / 75% / 50% / 25%) compared to single-signal baselines?</p>
+    </div>
+  </div>
+</section>
+
+<!-- Implementation Timeline -->
+<section id="plan">
+  <div class="section-header">
+    <div class="section-num">06 &mdash; Implementation</div>
+    <h2>8-Week Execution Plan</h2>
+    <p>Week-by-week breakdown from environment setup to thesis completion.</p>
+  </div>
+
+  <div class="impl-timeline">
+    <div class="impl-week" data-delay="0">
+      <div class="iw-num">Week 1-2</div>
+      <h4>Setup & Data</h4>
+      <ul>
+        <li>Python + PyTorch + PyG</li>
+        <li>Amazon-Beauty preprocessing</li>
+        <li>Amazon-Book validation split</li>
+        <li>Graph construction</li>
+        <li>Evaluation module</li>
+      </ul>
+    </div>
+
+    <div class="impl-week" data-delay="100">
+      <div class="iw-num">Week 3-4</div>
+      <h4>Baselines</h4>
+      <ul>
+        <li>LightGCN baseline</li>
+        <li>SASRec baseline</li>
+        <li>MF-BPR + Popularity</li>
+        <li>SASGCN comparator</li>
+        <li>Verify vs published</li>
+      </ul>
+    </div>
+
+    <div class="impl-week" data-delay="200">
+      <div class="iw-num">Week 5-6</div>
+      <h4>AdaFuse + Tuning</h4>
+      <ul>
+        <li>Implement AdaFuse model</li>
+        <li>Attention fusion gate</li>
+        <li>Hyperparameter grid search</li>
+        <li>Full runs (5 seeds)</li>
+        <li>Main results table</li>
+      </ul>
+    </div>
+
+    <div class="impl-week" data-delay="300">
+      <div class="iw-num">Week 7-8</div>
+      <h4>Analysis & Writing</h4>
+      <ul>
+        <li>Ablation study</li>
+        <li>Sparsity-stratified eval</li>
+        <li>&alpha; weight analysis</li>
+        <li>t-SNE visualization</li>
+        <li>Thesis writing</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Expected Results -->
+<section id="results">
+  <div class="section-header">
+    <div class="section-num">07 &mdash; Expected Results</div>
+    <h2>What We Expect to Find</h2>
+    <p>Projected performance and the key analytical insight.</p>
+  </div>
+
+  <!-- Performance chart -->
+  <div class="perf-chart" id="perfChart">
+    <div class="perf-bar-group">
+      <div class="perf-bar" style="height:0%;background:linear-gradient(to top,#475569,#64748b);" data-height="30">
+        <span class="pb-val" style="color:#94a3b8;">0.025</span>
+      </div>
+      <div class="perf-bar-label">Pop</div>
+    </div>
+    <div class="perf-bar-group">
+      <div class="perf-bar" style="height:0%;background:linear-gradient(to top,#475569,#64748b);" data-height="42">
+        <span class="pb-val" style="color:#94a3b8;">0.048</span>
+      </div>
+      <div class="perf-bar-label">MF-BPR</div>
+    </div>
+    <div class="perf-bar-group">
+      <div class="perf-bar" style="height:0%;background:linear-gradient(to top,#0891b2,#06b6d4);" data-height="56">
+        <span class="pb-val" style="color:var(--accent);">0.065</span>
+      </div>
+      <div class="perf-bar-label">LightGCN</div>
+    </div>
+    <div class="perf-bar-group">
+      <div class="perf-bar" style="height:0%;background:linear-gradient(to top,#7c3aed,#a78bfa);" data-height="61">
+        <span class="pb-val" style="color:#a78bfa;">0.070</span>
+      </div>
+      <div class="perf-bar-label">SASRec</div>
+    </div>
+    <div class="perf-bar-group">
+      <div class="perf-bar" style="height:0%;background:linear-gradient(to top,#a78bfa,#c084fc);" data-height="58">
+        <span class="pb-val" style="color:#c084fc;">0.067</span>
+      </div>
+      <div class="perf-bar-label">BERT4Rec</div>
+    </div>
+    <div class="perf-bar-group">
+      <div class="perf-bar" style="height:0%;background:linear-gradient(to top,#d97706,#f59e0b);" data-height="66">
+        <span class="pb-val" style="color:var(--accent3);">0.076</span>
+      </div>
+      <div class="perf-bar-label">SASGCN</div>
+    </div>
+    <div class="perf-bar-group">
+      <div class="perf-bar" style="height:0%;background:linear-gradient(to top,#059669,#10b981);" data-height="72">
+        <span class="pb-val" style="color:var(--green);font-weight:700;">0.082</span>
+      </div>
+      <div class="perf-bar-label" style="color:var(--green);font-weight:700;">AdaFuse</div>
+    </div>
+  </div>
+
+  <!-- Key insight -->
+  <div style="margin-top:3rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+    <div class="fade-in" style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:2rem;">
+      <h3 style="font-size:1.1rem;margin-bottom:1rem;">The Key Insight We Expect</h3>
+      <p style="color:var(--text2);font-size:0.9rem;line-height:1.7;">
+        The learned attention weight &alpha; should correlate with user activity level:
+      </p>
+      <div style="margin-top:1rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin:0.5rem 0;">
+          <div style="width:60px;height:8px;border-radius:4px;background:linear-gradient(to right,var(--accent),var(--accent));"></div>
+          <span style="font-size:0.82rem;color:var(--text2);"><strong style="color:var(--accent);">Sparse users (1-5 items)</strong> &mdash; &alpha; &asymp; 0.3, rely on GNN</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;margin:0.5rem 0;">
+          <div style="width:60px;height:8px;border-radius:4px;background:linear-gradient(to right,var(--accent),var(--accent2));"></div>
+          <span style="font-size:0.82rem;color:var(--text2);"><strong style="color:#a78bfa;">Medium users (10-30 items)</strong> &mdash; &alpha; &asymp; 0.5, balanced</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;margin:0.5rem 0;">
+          <div style="width:60px;height:8px;border-radius:4px;background:linear-gradient(to right,var(--accent2),var(--accent2));"></div>
+          <span style="font-size:0.82rem;color:var(--text2);"><strong style="color:var(--accent2);">Active users (30+ items)</strong> &mdash; &alpha; &asymp; 0.7, rely on Transformer</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fade-in" style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:2rem;">
+      <h3 style="font-size:1.1rem;margin-bottom:1rem;">Contribution Statement</h3>
+      <p style="color:var(--text2);font-size:0.9rem;line-height:1.7;">
+        "We propose <strong style="color:var(--green);">AdaFuse</strong>, a hybrid recommendation model that combines SASRec (Transformer) and LightGCN (GNN) through a <strong style="color:var(--accent);">learned per-user attention gate</strong>.
+        Unlike SASGCN (IEEE 2024) which uses static fusion, AdaFuse adaptively determines how much sequential vs. collaborative signal each user needs.
+        Experiments on Amazon-Beauty and Amazon-Book show AdaFuse outperforms static fusion, with sparse users benefiting more from GNN signal and active users from Transformer signal."
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>AdaFuse &mdash; Bachelor's Thesis Project &mdash; IIT Patna &mdash; 2026</p>
+  <p style="margin-top:0.5rem;color:var(--text3);">Adaptive Attention Fusion of Sequential and Collaborative Representations for Recommendation</p>
+</footer>
+
+<script>
+// Scroll-triggered animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const delay = entry.target.dataset.delay || 0;
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+      }, parseInt(delay));
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.timeline-item, .paper-card, .flaw-box, .fix-box, .arch-box, .rq-card, .impl-week, .fade-in').forEach(el => {
+  observer.observe(el);
+});
+
+// Performance chart animation
+const chartObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const bars = entry.target.querySelectorAll('.perf-bar');
+      bars.forEach((bar, i) => {
+        setTimeout(() => {
+          bar.style.height = bar.dataset.height + '%';
+        }, i * 100);
+      });
+      chartObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+chartObserver.observe(document.getElementById('perfChart'));
+
+// Active nav link
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('.nav-links a');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const top = section.offsetTop - 100;
+    if (window.scrollY >= top) {
+      current = section.getAttribute('id');
+    }
+  });
+
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+});
+</script>
+
+</body>
+</html>
