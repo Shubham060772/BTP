@@ -9,6 +9,7 @@
 # Optional overrides:
 #   SEEDS="42 123" EPOCHS=50 BATCH_SIZE=1024 CORE=3 bash run_kaggle.sh beauty
 #   MODELS="popularity mf lightgcn" bash run_kaggle.sh book
+#   ALPHA_REG=0.1 GRAPH_LOSS_WEIGHT=0.3 bash run_kaggle.sh beauty
 
 set -euo pipefail
 
@@ -23,6 +24,8 @@ PATIENCE="${PATIENCE:-20}"
 EVAL_EVERY="${EVAL_EVERY:-5}"
 NUM_WORKERS="${NUM_WORKERS:-2}"
 LEARNING_RATE="${LEARNING_RATE:-0.001}"
+ALPHA_REG="${ALPHA_REG:-0.1}"
+GRAPH_LOSS_WEIGHT="${GRAPH_LOSS_WEIGHT:-0.3}"
 
 mkdir -p "$WORK_DIR/data" "$WORK_DIR/results" "$WORK_DIR/logs"
 LOG_FILE="$WORK_DIR/logs/kaggle_${DATASET}.log"
@@ -146,6 +149,7 @@ mkdir -p "$RESULT_DIR"
 
 log "Seeds: $SEEDS_TEXT"
 log "Models: $MODELS_TEXT"
+log "Phase 1 hyperparams: alpha_reg=$ALPHA_REG, graph_loss_weight=$GRAPH_LOSS_WEIGHT"
 log "Training is uncapped: every eligible training instance and evaluation user is used."
 
 for seed in "${SEED_ARRAY[@]}"; do
@@ -172,6 +176,8 @@ for seed in "${SEED_ARRAY[@]}"; do
     --eval-every "$EVAL_EVERY" \
     --patience "$PATIENCE" \
     --learning-rate "$LEARNING_RATE" \
+    --alpha-reg "$ALPHA_REG" \
+    --graph-loss-weight "$GRAPH_LOSS_WEIGHT" \
     --ranking "$RANKING" \
     --models "${MODEL_ARRAY[@]}" \
     "${RESUME_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"

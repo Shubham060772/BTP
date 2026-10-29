@@ -90,6 +90,18 @@ def parse_args() -> argparse.Namespace:
         default=("popularity", "mf", "lightgcn", "sasrec", "sasgcn", "concat", "adafuse"),
     )
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--alpha-reg",
+        type=float,
+        default=0.0,
+        help="L1 penalty on gate alpha to push toward graph-only (residual gate).",
+    )
+    parser.add_argument(
+        "--graph-loss-weight",
+        type=float,
+        default=0.0,
+        help="Weight for auxiliary BPR loss on pure graph embeddings (multi-task).",
+    )
     return parser.parse_args()
 
 
@@ -440,7 +452,8 @@ class JointHybrid(nn.Module):
         alpha = self.fusion(
             torch.cat((sequence_user, graph_user, sequence_user * graph_user), dim=-1)
         )
-        return alpha * sequence_user + (1.0 - alpha) * graph_user, alpha
+        # Residual: graph is the base, sequence corrects it. alpha=0 → pure graph.
+        return graph_user + alpha * (sequence_user - graph_user), alpha
 
     def encode_user(self, users, sequence, length, propagated=None):
         graph = self.propagated if propagated is None else propagated
@@ -450,10 +463,11 @@ class JointHybrid(nn.Module):
         return self.fuse(sequence_user, graph[users])
 
     def triplet_with_graph(self, graph, users, sequence, length, positives, negatives):
-        user, _ = self.encode_user(users, sequence, length, graph)
+        user, alpha = self.encode_user(users, sequence, length, graph)
+        graph_user = graph[users]
         positive = graph[self.num_users + positives]
         negative = graph[self.num_users + negatives]
-        return user, positive, negative
+        return user, positive, negative, graph_user, alpha
 
     def score(self, user, items, sequence, length):
         encoded, _ = self.encode_user(user, sequence, length)
@@ -515,7 +529,7 @@ class FusionModel(nn.Module):
         alpha = self.head(
             torch.cat((sequence_user, graph_user, sequence_user * graph_user), dim=-1)
         )
-        return alpha * sequence_user + (1.0 - alpha) * graph_user
+        return graph_user + alpha * (sequence_user - graph_user)
 
     def triplet(self, users, sequence, length, positives, negatives):
         encoded = self.encode_user(users, sequence, length)
@@ -727,6 +741,8 @@ def train_joint_model(model, loader, data, args, name, checkpoint):
     best_state = None
     stale_epochs = 0
     example_count = len(loader.dataset)
+    alpha_reg = getattr(args, "alpha_reg", 0.0)
+    graph_loss_weight = getattr(args, "graph_loss_weight", 0.0)
 
     for epoch in range(1, args.epochs + 1):
         model.train()
@@ -739,12 +755,18 @@ def train_joint_model(model, loader, data, args, name, checkpoint):
             users, sequences, lengths, positives, negatives = [
                 tensor.to(DEVICE) for tensor in batch
             ]
-            embeddings = model.triplet_with_graph(
-                graph_leaf, users, sequences, lengths, positives, negatives
+            fused_user, positive, negative, graph_user, alpha = (
+                model.triplet_with_graph(
+                    graph_leaf, users, sequences, lengths, positives, negatives
+                )
             )
-            loss = bpr_loss(*embeddings, args.weight_decay)
-            # Weight uneven final batches so the accumulated gradient equals
-            # the mean example loss over this epoch.
+            loss = bpr_loss(fused_user, positive, negative, args.weight_decay)
+            if graph_loss_weight > 0:
+                loss = loss + graph_loss_weight * bpr_loss(
+                    graph_user, positive, negative, args.weight_decay
+                )
+            if alpha_reg > 0 and alpha is not None:
+                loss = loss + alpha_reg * alpha.mean()
             weight = users.size(0) / example_count
             (loss * weight).backward()
             total += loss.item() * users.size(0)
