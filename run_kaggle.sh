@@ -28,7 +28,7 @@ ALPHA_REG="${ALPHA_REG:-0.0}"
 GRAPH_LOSS_WEIGHT="${GRAPH_LOSS_WEIGHT:-0.0}"
 SEQ_LAYERS="${SEQ_LAYERS:-2}"
 GRAPH_ENRICHED="${GRAPH_ENRICHED:-false}"
-LENGTH_AWARE="${LENGTH_AWARE:-true}"
+LENGTH_AWARE="${LENGTH_AWARE:-false}"
 
 mkdir -p "$WORK_DIR/data" "$WORK_DIR/results" "$WORK_DIR/logs"
 LOG_FILE="$WORK_DIR/logs/kaggle_${DATASET}.log"
@@ -123,14 +123,22 @@ case "$DATASET" in
     RANKING="sampled"
     RESULT_DIR="$WORK_DIR/results/book"
     PROCESSED_DATA="$WORK_DIR/data/amazon_book.pkl"
-    if [[ -z "$INPUT_PATH" ]]; then
-      TRAIN_FILE="$(find_first 'train.txt')"
-      [[ -n "$TRAIN_FILE" ]] && INPUT_PATH="$(dirname "$TRAIN_FILE")"
-    fi
-    [[ -n "$INPUT_PATH" && -f "$INPUT_PATH/train.txt" && -f "$INPUT_PATH/test.txt" ]] || fail \
-      "Amazon-Book train.txt and test.txt were not found. Pass their directory as argument 2."
-    log "WARNING: Amazon-Book has no timestamps. SASRec/SASGCN/AdaFuse use synthetic list order."
+    # Check for a pre-uploaded pkl in Kaggle input first
     if [[ ! -f "$PROCESSED_DATA" ]]; then
+      EXISTING_PKL="$(find /kaggle/input -type f -name 'amazon_book.pkl' -print -quit 2>/dev/null || true)"
+      if [[ -n "$EXISTING_PKL" ]]; then
+        log "Found pre-processed pkl: $EXISTING_PKL"
+        cp "$EXISTING_PKL" "$PROCESSED_DATA"
+      fi
+    fi
+    if [[ ! -f "$PROCESSED_DATA" ]]; then
+      if [[ -z "$INPUT_PATH" ]]; then
+        TRAIN_FILE="$(find_first 'train.txt')"
+        [[ -n "$TRAIN_FILE" ]] && INPUT_PATH="$(dirname "$TRAIN_FILE")"
+      fi
+      [[ -n "$INPUT_PATH" && -f "$INPUT_PATH/train.txt" && -f "$INPUT_PATH/test.txt" ]] || fail \
+        "Amazon-Book data not found. Upload amazon_book.pkl or train.txt+test.txt as Kaggle input."
+      log "WARNING: Amazon-Book has no timestamps. SASRec/SASGCN/AdaFuse use synthetic list order."
       "$PYTHON_BIN" "$PROJECT_DIR/src/prepare_amazon_book.py" \
         --data-dir "$INPUT_PATH" \
         --output "$PROCESSED_DATA" 2>&1 | tee -a "$LOG_FILE"
