@@ -8,21 +8,29 @@ roadmap/.venv/
 
 # Generated experiment artifacts
 results/
+tests/
+tools/
 checkpoints/
 *.log
 *.stackdump
 .ppt_preview_*/
 Slide*.PNG
 
-# Datasets are attached separately in Kaggle
-roadmap/data/
+# Large binary formats (catch-all)
 *.pkl
 *.parquet
 *.jsonl
+
+# Datasets are attached separately in Kaggle
+roadmap/data/*
+!roadmap/data/amazon-book/
+roadmap/data/amazon-book/*
+!roadmap/data/amazon-book/train.txt
+!roadmap/data/amazon-book/test.txt
+!roadmap/data/amazon-book/amazon_book.pkl
 
 # Editor/OS files
 .idea/
 .vscode/
 .DS_Store
 Thumbs.db
-

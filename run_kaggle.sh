@@ -123,10 +123,11 @@ case "$DATASET" in
     RANKING="sampled"
     RESULT_DIR="$WORK_DIR/results/book"
     PROCESSED_DATA="$WORK_DIR/data/amazon_book.pkl"
-    # Check for a pre-uploaded pkl in Kaggle input first
+    # Check for pkl in Kaggle input or the repo's own data directory
     if [[ ! -f "$PROCESSED_DATA" ]]; then
       EXISTING_PKL="$(find /kaggle/input -type f -name 'amazon_book.pkl' -print -quit 2>/dev/null || true)"
-      if [[ -n "$EXISTING_PKL" ]]; then
+      [[ -z "$EXISTING_PKL" ]] && EXISTING_PKL="${PROJECT_DIR}/roadmap/data/amazon-book/amazon_book.pkl"
+      if [[ -f "$EXISTING_PKL" ]]; then
         log "Found pre-processed pkl: $EXISTING_PKL"
         cp "$EXISTING_PKL" "$PROCESSED_DATA"
       fi
