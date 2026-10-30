@@ -113,6 +113,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Feed propagated (graph-enriched) embeddings into the Transformer.",
     )
+    parser.add_argument(
+        "--length-aware",
+        action="store_true",
+        help="Modulate gate alpha by learned confidence based on sequence length.",
+    )
     return parser.parse_args()
 
 
@@ -415,6 +420,7 @@ class JointHybrid(nn.Module):
         graph_layers=3,
         seq_layers=2,
         graph_enriched=False,
+        length_aware=False,
     ):
         super().__init__()
         self.num_users = num_users
@@ -424,6 +430,7 @@ class JointHybrid(nn.Module):
         self.fusion_kind = fusion_kind
         self.graph_layers = graph_layers
         self.graph_enriched = graph_enriched
+        self.length_aware = length_aware
         self.node_embedding = nn.Embedding(num_users + num_items, dimension)
         nn.init.xavier_normal_(self.node_embedding.weight)
         self.sequence_encoder = SharedSASRecEncoder(
@@ -443,6 +450,9 @@ class JointHybrid(nn.Module):
         if fusion_kind == "gate":
             # Exact plan equation: sigmoid(w^T [seq; col; seq*col] + b).
             self.fusion = nn.Sequential(nn.Linear(3 * dimension, 1), nn.Sigmoid())
+            if length_aware:
+                self.length_scale = nn.Parameter(torch.tensor(1.0))
+                self.length_bias = nn.Parameter(torch.tensor(0.0))
         elif fusion_kind == "concat":
             self.fusion = nn.Sequential(
                 nn.Linear(2 * dimension, dimension),
@@ -479,12 +489,18 @@ class JointHybrid(nn.Module):
     def clear_graph(self):
         self.propagated = None
 
-    def fuse(self, sequence_user, graph_user):
+    def fuse(self, sequence_user, graph_user, length=None):
         if self.fusion_kind == "concat":
             return self.fusion(torch.cat((sequence_user, graph_user), dim=-1)), None
         alpha = self.fusion(
             torch.cat((sequence_user, graph_user, sequence_user * graph_user), dim=-1)
         )
+        if self.length_aware and length is not None:
+            confidence = torch.sigmoid(
+                self.length_scale * torch.log1p(length.float()).unsqueeze(-1)
+                + self.length_bias
+            )
+            alpha = alpha * confidence
         # Residual: graph is the base, sequence corrects it. alpha=0 → pure graph.
         return graph_user + alpha * (sequence_user - graph_user), alpha
 
@@ -495,7 +511,7 @@ class JointHybrid(nn.Module):
         sequence_user = self.sequence_encoder.encode(
             sequence, length, propagated=graph if self.graph_enriched else None,
         )
-        return self.fuse(sequence_user, graph[users])
+        return self.fuse(sequence_user, graph[users], length)
 
     def triplet_with_graph(self, graph, users, sequence, length, positives, negatives):
         user, alpha = self.encode_user(users, sequence, length, graph)
@@ -1050,6 +1066,7 @@ def main() -> None:
             graph_layers=3,
             seq_layers=args.seq_layers,
             graph_enriched=args.graph_enriched,
+            length_aware=getattr(args, "length_aware", False),
         ).to(DEVICE)
         adafuse.initialize_from_baselines(lightgcn=lightgcn, sasrec=sasrec)
         adafuse = fit_or_load(adafuse, "adafuse", sequence_loader, True)
