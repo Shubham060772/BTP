@@ -102,6 +102,17 @@ def parse_args() -> argparse.Namespace:
         default=0.0,
         help="Weight for auxiliary BPR loss on pure graph embeddings (multi-task).",
     )
+    parser.add_argument(
+        "--seq-layers",
+        type=int,
+        default=2,
+        help="Number of Transformer encoder layers in the sequence encoder.",
+    )
+    parser.add_argument(
+        "--graph-enriched",
+        action="store_true",
+        help="Feed propagated (graph-enriched) embeddings into the Transformer.",
+    )
     return parser.parse_args()
 
 
@@ -322,13 +333,20 @@ class SASRec(nn.Module):
 
 
 class SharedSASRecEncoder(nn.Module):
-    """SASRec encoder whose item inputs come from a shared graph table."""
+    """SASRec encoder whose item inputs come from a shared graph table.
 
-    def __init__(self, node_embedding, num_users, dimension, max_len, dropout=0.2):
+    When ``graph_enriched=True``, ``encode`` expects a pre-built propagated
+    embedding table and indexes into it instead of the raw node_embedding.
+    This feeds multi-hop neighbourhood information into the Transformer.
+    """
+
+    def __init__(self, node_embedding, num_users, dimension, max_len,
+                 dropout=0.2, num_layers=2, graph_enriched=False):
         super().__init__()
         self.node_embedding = node_embedding
         self.num_users = num_users
         self.max_len = max_len
+        self.graph_enriched = graph_enriched
         self.position = nn.Embedding(max_len, dimension)
         layer = nn.TransformerEncoderLayer(
             d_model=dimension,
@@ -338,13 +356,16 @@ class SharedSASRecEncoder(nn.Module):
             batch_first=True,
             activation="gelu",
         )
-        self.encoder = nn.TransformerEncoder(layer, num_layers=2)
+        self.encoder = nn.TransformerEncoder(layer, num_layers=num_layers)
         self.norm = nn.LayerNorm(dimension)
 
-    def encode(self, sequence, length):
+    def encode(self, sequence, length, propagated=None):
         # sequence uses 0 for padding and item_id + 1 otherwise.
         item_nodes = self.num_users + (sequence - 1).clamp_min(0)
-        hidden = self.node_embedding(item_nodes)
+        if self.graph_enriched and propagated is not None:
+            hidden = propagated[item_nodes]
+        else:
+            hidden = self.node_embedding(item_nodes)
         hidden = hidden.masked_fill(sequence.eq(0).unsqueeze(-1), 0.0)
         positions = torch.arange(self.max_len, device=sequence.device)[None, :]
         hidden = hidden + self.position(positions)
@@ -363,7 +384,15 @@ class SharedSASRecEncoder(nn.Module):
 
     def initialize_from(self, sasrec):
         self.position.load_state_dict(sasrec.position.state_dict())
-        self.encoder.load_state_dict(sasrec.encoder.state_dict())
+        if len(list(self.encoder.parameters())) == len(list(sasrec.encoder.parameters())):
+            self.encoder.load_state_dict(sasrec.encoder.state_dict())
+        else:
+            # Layer count differs (e.g. pretrained 2-layer → 1-layer encoder).
+            # Copy only the first layer's weights.
+            src = dict(sasrec.encoder.named_parameters())
+            for name, param in self.encoder.named_parameters():
+                if name in src and param.shape == src[name].shape:
+                    param.data.copy_(src[name].data)
         self.norm.load_state_dict(sasrec.norm.state_dict())
 
 
@@ -384,6 +413,8 @@ class JointHybrid(nn.Module):
         graph_kind,
         fusion_kind,
         graph_layers=3,
+        seq_layers=2,
+        graph_enriched=False,
     ):
         super().__init__()
         self.num_users = num_users
@@ -392,10 +423,12 @@ class JointHybrid(nn.Module):
         self.graph_kind = graph_kind
         self.fusion_kind = fusion_kind
         self.graph_layers = graph_layers
+        self.graph_enriched = graph_enriched
         self.node_embedding = nn.Embedding(num_users + num_items, dimension)
         nn.init.xavier_normal_(self.node_embedding.weight)
         self.sequence_encoder = SharedSASRecEncoder(
-            self.node_embedding, num_users, dimension, max_len
+            self.node_embedding, num_users, dimension, max_len,
+            num_layers=seq_layers, graph_enriched=graph_enriched,
         )
         if graph_kind == "gcn":
             self.gcn_linears = nn.ModuleList(
@@ -459,7 +492,9 @@ class JointHybrid(nn.Module):
         graph = self.propagated if propagated is None else propagated
         if graph is None:
             graph = self.propagate()
-        sequence_user = self.sequence_encoder.encode(sequence, length)
+        sequence_user = self.sequence_encoder.encode(
+            sequence, length, propagated=graph if self.graph_enriched else None,
+        )
         return self.fuse(sequence_user, graph[users])
 
     def triplet_with_graph(self, graph, users, sequence, length, positives, negatives):
@@ -992,6 +1027,7 @@ def main() -> None:
             graph_kind="gcn",
             fusion_kind="concat",
             graph_layers=2,
+            seq_layers=args.seq_layers,
         ).to(DEVICE)
         sasgcn.initialize_from_baselines(sasrec=sasrec)
         sasgcn = fit_or_load(sasgcn, "sasgcn", sequence_loader, True)
@@ -1012,6 +1048,8 @@ def main() -> None:
             graph_kind="lightgcn",
             fusion_kind="gate",
             graph_layers=3,
+            seq_layers=args.seq_layers,
+            graph_enriched=args.graph_enriched,
         ).to(DEVICE)
         adafuse.initialize_from_baselines(lightgcn=lightgcn, sasrec=sasrec)
         adafuse = fit_or_load(adafuse, "adafuse", sequence_loader, True)

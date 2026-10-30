@@ -24,8 +24,10 @@ PATIENCE="${PATIENCE:-20}"
 EVAL_EVERY="${EVAL_EVERY:-5}"
 NUM_WORKERS="${NUM_WORKERS:-2}"
 LEARNING_RATE="${LEARNING_RATE:-0.001}"
-ALPHA_REG="${ALPHA_REG:-0.1}"
-GRAPH_LOSS_WEIGHT="${GRAPH_LOSS_WEIGHT:-0.3}"
+ALPHA_REG="${ALPHA_REG:-0.0}"
+GRAPH_LOSS_WEIGHT="${GRAPH_LOSS_WEIGHT:-0.0}"
+SEQ_LAYERS="${SEQ_LAYERS:-1}"
+GRAPH_ENRICHED="${GRAPH_ENRICHED:-true}"
 
 mkdir -p "$WORK_DIR/data" "$WORK_DIR/results" "$WORK_DIR/logs"
 LOG_FILE="$WORK_DIR/logs/kaggle_${DATASET}.log"
@@ -149,7 +151,7 @@ mkdir -p "$RESULT_DIR"
 
 log "Seeds: $SEEDS_TEXT"
 log "Models: $MODELS_TEXT"
-log "Phase 1 hyperparams: alpha_reg=$ALPHA_REG, graph_loss_weight=$GRAPH_LOSS_WEIGHT"
+log "Fusion: alpha_reg=$ALPHA_REG, graph_loss_weight=$GRAPH_LOSS_WEIGHT, seq_layers=$SEQ_LAYERS, graph_enriched=$GRAPH_ENRICHED"
 log "Training is uncapped: every eligible training instance and evaluation user is used."
 
 for seed in "${SEED_ARRAY[@]}"; do
@@ -178,6 +180,8 @@ for seed in "${SEED_ARRAY[@]}"; do
     --learning-rate "$LEARNING_RATE" \
     --alpha-reg "$ALPHA_REG" \
     --graph-loss-weight "$GRAPH_LOSS_WEIGHT" \
+    --seq-layers "$SEQ_LAYERS" \
+    $( [[ "$GRAPH_ENRICHED" == "true" ]] && echo "--graph-enriched" ) \
     --ranking "$RANKING" \
     --models "${MODEL_ARRAY[@]}" \
     "${RESUME_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"
