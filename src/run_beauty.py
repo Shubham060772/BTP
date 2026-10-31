@@ -459,7 +459,13 @@ class JointHybrid(nn.Module):
 
         if fusion_kind == "gate":
             # Exact plan equation: sigmoid(w^T [seq; col; seq*col] + b).
-            self.fusion = nn.Sequential(nn.Linear(3 * dimension, 1), nn.Sigmoid())
+            # Zero-init so alpha starts at 0.5 (equal weighting), preventing
+            # the gate from immediately saturating toward seq-only before
+            # joint training has had a chance to stabilise embeddings.
+            _gate_linear = nn.Linear(3 * dimension, 1)
+            nn.init.zeros_(_gate_linear.weight)
+            nn.init.zeros_(_gate_linear.bias)
+            self.fusion = nn.Sequential(_gate_linear, nn.Sigmoid())
             if length_aware:
                 self.length_scale = nn.Parameter(torch.tensor(1.0))
                 self.length_bias = nn.Parameter(torch.tensor(0.0))
@@ -834,6 +840,7 @@ def train_joint_model(model, loader, data, args, name, checkpoint):
                 weight = users.size(0) / example_count
                 (loss * weight).backward()
                 total += loss.item() * users.size(0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             gate_optimizer.step()
             if epoch % args.eval_every == 0:
                 metrics, _ = evaluate(model, data, "validation", args, args.seed + 10_000)

@@ -20,7 +20,6 @@ WORK_DIR="${KAGGLE_WORK_DIR:-/kaggle/working/adafuse}"
 PYTHON_BIN="${PYTHON_BIN:-python}"
 SEEDS_TEXT="${SEEDS:-42 123 456 789 1024}"
 EPOCHS="${EPOCHS:-100}"
-PATIENCE="${PATIENCE:-20}"
 EVAL_EVERY="${EVAL_EVERY:-5}"
 NUM_WORKERS="${NUM_WORKERS:-2}"
 LEARNING_RATE="${LEARNING_RATE:-0.001}"
@@ -29,8 +28,7 @@ GRAPH_LOSS_WEIGHT="${GRAPH_LOSS_WEIGHT:-0.0}"
 SEQ_LAYERS="${SEQ_LAYERS:-2}"
 GRAPH_ENRICHED="${GRAPH_ENRICHED:-false}"
 LENGTH_AWARE="${LENGTH_AWARE:-false}"
-# Set >0 on dense datasets (e.g. book) to warm-up gate before joint training
-PRETRAIN_EPOCHS="${PRETRAIN_EPOCHS:-0}"
+# PATIENCE and PRETRAIN_EPOCHS have dataset-specific defaults (set in case block below)
 
 mkdir -p "$WORK_DIR/data" "$WORK_DIR/results" "$WORK_DIR/logs"
 LOG_FILE="$WORK_DIR/logs/kaggle_${DATASET}.log"
@@ -95,6 +93,8 @@ case "$DATASET" in
     # Three interactions are the mathematical minimum for one train, one
     # validation, and one test event. This retains the largest defensible
     # timestamped leave-two-out dataset.
+    PATIENCE="${PATIENCE:-20}"
+    PRETRAIN_EPOCHS="${PRETRAIN_EPOCHS:-0}"
     CORE="${CORE:-3}"
     BATCH_SIZE="${BATCH_SIZE:-1024}"
     RANKING="full"
@@ -121,6 +121,10 @@ case "$DATASET" in
     ;;
 
   book)
+    # Book needs more epochs — MF/SASRec don't converge in 30 epochs on 2.3M interactions.
+    # PATIENCE=30 gives models more time; PRETRAIN_EPOCHS=20 stabilises the AdaFuse gate.
+    PATIENCE="${PATIENCE:-30}"
+    PRETRAIN_EPOCHS="${PRETRAIN_EPOCHS:-20}"
     BATCH_SIZE="${BATCH_SIZE:-4096}"
     RANKING="sampled"
     RESULT_DIR="$WORK_DIR/results/book"
