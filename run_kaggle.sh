@@ -174,6 +174,19 @@ for seed in "${SEED_ARRAY[@]}"; do
   fi
 
   log "Starting seed $seed"
+  # Copy baseline checkpoints from repo if present (saves retraining MF/LightGCN/SASRec)
+  REPO_CKPT_DIR="$PROJECT_DIR/results/${DATASET}/seed_${seed}/checkpoints"
+  if [[ -d "$REPO_CKPT_DIR" ]]; then
+    mkdir -p "$SEED_DIR/checkpoints"
+    for ckpt in mf lightgcn sasrec; do
+      src="$REPO_CKPT_DIR/${ckpt}.pt"
+      dst="$SEED_DIR/checkpoints/${ckpt}.pt"
+      if [[ -f "$src" && ! -f "$dst" ]]; then
+        cp "$src" "$dst"
+        log "Copied baseline checkpoint: ${ckpt}.pt (seed $seed)"
+      fi
+    done
+  fi
   RESUME_ARGS=()
   if [[ -d "$SEED_DIR/checkpoints" ]]; then
     RESUME_ARGS=(--resume)

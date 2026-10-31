@@ -7,10 +7,8 @@ venv/
 roadmap/.venv/
 
 # Generated experiment artifacts
-results/
 tests/
 tools/
-checkpoints/
 *.log
 *.stackdump
 .ppt_preview_*/
@@ -20,6 +18,47 @@ Slide*.PNG
 *.pkl
 *.parquet
 *.jsonl
+*.pt
+
+# results/ — ignore everything except Book baseline checkpoints
+results/*
+!results/book/
+results/book/*
+!results/book/seed_42/
+!results/book/seed_123/
+!results/book/seed_456/
+!results/book/seed_789/
+!results/book/seed_1024/
+results/book/seed_42/*
+results/book/seed_123/*
+results/book/seed_456/*
+results/book/seed_789/*
+results/book/seed_1024/*
+!results/book/seed_42/checkpoints/
+!results/book/seed_123/checkpoints/
+!results/book/seed_456/checkpoints/
+!results/book/seed_789/checkpoints/
+!results/book/seed_1024/checkpoints/
+results/book/seed_42/checkpoints/*
+results/book/seed_123/checkpoints/*
+results/book/seed_456/checkpoints/*
+results/book/seed_789/checkpoints/*
+results/book/seed_1024/checkpoints/*
+!results/book/seed_42/checkpoints/mf.pt
+!results/book/seed_42/checkpoints/lightgcn.pt
+!results/book/seed_42/checkpoints/sasrec.pt
+!results/book/seed_123/checkpoints/mf.pt
+!results/book/seed_123/checkpoints/lightgcn.pt
+!results/book/seed_123/checkpoints/sasrec.pt
+!results/book/seed_456/checkpoints/mf.pt
+!results/book/seed_456/checkpoints/lightgcn.pt
+!results/book/seed_456/checkpoints/sasrec.pt
+!results/book/seed_789/checkpoints/mf.pt
+!results/book/seed_789/checkpoints/lightgcn.pt
+!results/book/seed_789/checkpoints/sasrec.pt
+!results/book/seed_1024/checkpoints/mf.pt
+!results/book/seed_1024/checkpoints/lightgcn.pt
+!results/book/seed_1024/checkpoints/sasrec.pt
 
 # Datasets are attached separately in Kaggle
 roadmap/data/*
