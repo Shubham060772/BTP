@@ -845,6 +845,7 @@ def train_joint_model(model, loader, data, args, name, checkpoint):
             if epoch % args.eval_every == 0:
                 metrics, _ = evaluate(model, data, "validation", args, args.seed + 10_000)
                 log(f"{name} pretrain epoch {epoch:3d}: loss={total/example_count:.5f}, val={metrics}")
+                model.cache_graph()  # evaluate() calls clear_graph(); restore for next epoch
         model.clear_graph()
         # Unfreeze everything for Phase 2
         for param in model.parameters():
