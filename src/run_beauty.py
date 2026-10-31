@@ -118,6 +118,16 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Modulate gate alpha by learned confidence based on sequence length.",
     )
+    parser.add_argument(
+        "--pretrain-epochs",
+        type=int,
+        default=0,
+        help=(
+            "Epochs to train only the fusion gate (encoders frozen) before "
+            "joint end-to-end training. Helps on dense datasets where joint "
+            "training collapses (e.g. Amazon-Book)."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -786,14 +796,59 @@ def train_joint_model(model, loader, data, args, name, checkpoint):
     propagated graph. The aggregate leaf gradient is then sent through the GNN
     once. This is the exact chain-rule gradient for the epoch objective while
     avoiding one full sparse propagation per sequence mini-batch.
+
+    When args.pretrain_epochs > 0, Phase 1 trains only the fusion gate with
+    encoders frozen. Phase 2 unfreezes everything for joint fine-tuning.
+    This prevents joint-training collapse on dense datasets.
     """
+    pretrain_epochs = getattr(args, "pretrain_epochs", 0)
+    alpha_reg = getattr(args, "alpha_reg", 0.0)
+    graph_loss_weight = getattr(args, "graph_loss_weight", 0.0)
+    example_count = len(loader.dataset)
+
+    # --- Phase 1: gate-only warm-up (encoders frozen) ---
+    if pretrain_epochs > 0:
+        log(f"{name} phase-1: training fusion gate only for {pretrain_epochs} epochs")
+        # Freeze all encoder params; only fusion gate trains
+        for param_name, param in model.named_parameters():
+            param.requires_grad_(param_name.startswith("fusion"))
+        gate_optimizer = torch.optim.Adam(
+            [p for p in model.parameters() if p.requires_grad],
+            lr=args.learning_rate,
+        )
+        model.cache_graph()
+        for epoch in range(1, pretrain_epochs + 1):
+            model.train()
+            gate_optimizer.zero_grad(set_to_none=True)
+            total = 0.0
+            for batch in loader:
+                users, sequences, lengths, positives, negatives = [
+                    t.to(DEVICE) for t in batch
+                ]
+                fused_user, alpha = model.encode_user(users, sequences, lengths)
+                positive = model.propagated[model.num_users + positives]
+                negative = model.propagated[model.num_users + negatives]
+                loss = bpr_loss(fused_user, positive, negative, args.weight_decay)
+                if alpha_reg > 0 and alpha is not None:
+                    loss = loss + alpha_reg * alpha.mean()
+                weight = users.size(0) / example_count
+                (loss * weight).backward()
+                total += loss.item() * users.size(0)
+            gate_optimizer.step()
+            if epoch % args.eval_every == 0:
+                metrics, _ = evaluate(model, data, "validation", args, args.seed + 10_000)
+                log(f"{name} pretrain epoch {epoch:3d}: loss={total/example_count:.5f}, val={metrics}")
+        model.clear_graph()
+        # Unfreeze everything for Phase 2
+        for param in model.parameters():
+            param.requires_grad_(True)
+        log(f"{name} phase-2: joint end-to-end fine-tuning")
+
+    # --- Phase 2: full joint training ---
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     best_score = -1.0
     best_state = None
     stale_epochs = 0
-    example_count = len(loader.dataset)
-    alpha_reg = getattr(args, "alpha_reg", 0.0)
-    graph_loss_weight = getattr(args, "graph_loss_weight", 0.0)
 
     for epoch in range(1, args.epochs + 1):
         model.train()
