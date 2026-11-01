@@ -86,7 +86,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--models",
         nargs="+",
-        choices=("popularity", "mf", "lightgcn", "sasrec", "sasgcn", "concat", "adafuse"),
+        choices=("popularity", "mf", "lightgcn", "sasrec", "sasgcn", "concat", "adafuse", "crossattn", "moefuse"),
         default=("popularity", "mf", "lightgcn", "sasrec", "sasgcn", "concat", "adafuse"),
     )
     parser.add_argument("--resume", action="store_true")
@@ -475,6 +475,31 @@ class JointHybrid(nn.Module):
                 nn.ReLU(),
                 nn.Linear(dimension, dimension),
             )
+        elif fusion_kind == "crossattn":
+            self.cross_attn = nn.MultiheadAttention(
+                dimension, num_heads=2, batch_first=True, dropout=0.1,
+            )
+            _cross_gate = nn.Linear(2 * dimension, dimension)
+            nn.init.zeros_(_cross_gate.weight)
+            nn.init.zeros_(_cross_gate.bias)
+            self.cross_gate = nn.Sequential(_cross_gate, nn.Sigmoid())
+            self.cross_proj = nn.Linear(dimension, dimension)
+            self.cross_norm = nn.LayerNorm(dimension)
+        elif fusion_kind == "moe":
+            self.num_experts = 3
+            self.experts = nn.ModuleList([
+                nn.Sequential(
+                    nn.Linear(2 * dimension, dimension),
+                    nn.GELU(),
+                    nn.Linear(dimension, dimension),
+                )
+                for _ in range(self.num_experts)
+            ])
+            _router = nn.Linear(3 * dimension, self.num_experts)
+            nn.init.zeros_(_router.weight)
+            nn.init.zeros_(_router.bias)
+            self.router = _router
+            self.moe_norm = nn.LayerNorm(dimension)
         else:
             raise ValueError(fusion_kind)
         self.propagated = None
@@ -508,6 +533,31 @@ class JointHybrid(nn.Module):
     def fuse(self, sequence_user, graph_user, length=None):
         if self.fusion_kind == "concat":
             return self.fusion(torch.cat((sequence_user, graph_user), dim=-1)), None
+
+        if self.fusion_kind == "crossattn":
+            tokens = torch.stack([sequence_user, graph_user], dim=1)  # (B, 2, D)
+            attended, _ = self.cross_attn(tokens, tokens, tokens)
+            gate = self.cross_gate(
+                torch.cat([attended[:, 0], attended[:, 1]], dim=-1)
+            )  # (B, D) per-dimension gate
+            fused = gate * attended[:, 0] + (1 - gate) * attended[:, 1]
+            fused = self.cross_norm(self.cross_proj(fused) + graph_user)
+            return fused, gate.mean(dim=-1, keepdim=True)
+
+        if self.fusion_kind == "moe":
+            combined = torch.cat([sequence_user, graph_user], dim=-1)  # (B, 2D)
+            router_in = torch.cat(
+                [sequence_user, graph_user, sequence_user * graph_user], dim=-1,
+            )  # (B, 3D)
+            weights = F.softmax(self.router(router_in), dim=-1)  # (B, E)
+            expert_out = torch.stack(
+                [e(combined) for e in self.experts], dim=1,
+            )  # (B, E, D)
+            fused = (weights.unsqueeze(-1) * expert_out).sum(dim=1)  # (B, D)
+            fused = self.moe_norm(fused + graph_user)
+            return fused, weights[:, :1]
+
+        # Gate fusion (AdaFuse)
         alpha = self.fusion(
             torch.cat((sequence_user, graph_user, sequence_user * graph_user), dim=-1)
         )
@@ -517,7 +567,6 @@ class JointHybrid(nn.Module):
                 + self.length_bias
             )
             alpha = alpha * confidence
-        # Residual: graph is the base, sequence corrects it. alpha=0 → pure graph.
         return graph_user + alpha * (sequence_user - graph_user), alpha
 
     def encode_user(self, users, sequence, length, propagated=None):
@@ -1056,10 +1105,10 @@ def main() -> None:
         del mf
 
     needs_graph = any(
-        name in args.models for name in ("lightgcn", "sasgcn", "concat", "adafuse")
+        name in args.models for name in ("lightgcn", "sasgcn", "concat", "adafuse", "crossattn", "moefuse")
     )
     needs_sequence = any(
-        name in args.models for name in ("sasrec", "sasgcn", "concat", "adafuse")
+        name in args.models for name in ("sasrec", "sasgcn", "concat", "adafuse", "crossattn", "moefuse")
     )
     lightgcn = None
     sasrec = None
@@ -1139,6 +1188,38 @@ def main() -> None:
         log(f"adafuse test={results['adafuse']}")
         alpha_values = extract_alphas(adafuse, data, args)
         del adafuse
+
+    if "crossattn" in args.models:
+        crossattn = JointHybrid(
+            data["num_users"], data["num_items"], args.embedding_dim, args.max_seq_len,
+            adjacency, graph_kind="lightgcn", fusion_kind="crossattn", graph_layers=3,
+            seq_layers=args.seq_layers, graph_enriched=args.graph_enriched,
+        ).to(DEVICE)
+        crossattn.initialize_from_baselines(lightgcn=lightgcn, sasrec=sasrec)
+        crossattn = fit_or_load(crossattn, "crossattn", sequence_loader, True)
+        results["crossattn"], per_user_scores["crossattn"] = evaluate(
+            crossattn, data, "test", args, args.seed + 20_000
+        )
+        log(f"crossattn test={results['crossattn']}")
+        if not alpha_values:
+            alpha_values = extract_alphas(crossattn, data, args)
+        del crossattn
+
+    if "moefuse" in args.models:
+        moefuse = JointHybrid(
+            data["num_users"], data["num_items"], args.embedding_dim, args.max_seq_len,
+            adjacency, graph_kind="lightgcn", fusion_kind="moe", graph_layers=3,
+            seq_layers=args.seq_layers, graph_enriched=args.graph_enriched,
+        ).to(DEVICE)
+        moefuse.initialize_from_baselines(lightgcn=lightgcn, sasrec=sasrec)
+        moefuse = fit_or_load(moefuse, "moefuse", sequence_loader, True)
+        results["moefuse"], per_user_scores["moefuse"] = evaluate(
+            moefuse, data, "test", args, args.seed + 20_000
+        )
+        log(f"moefuse test={results['moefuse']}")
+        if not alpha_values:
+            alpha_values = extract_alphas(moefuse, data, args)
+        del moefuse
 
     payload = {
         "protocol": {
