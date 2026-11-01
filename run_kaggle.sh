@@ -28,6 +28,7 @@ GRAPH_LOSS_WEIGHT="${GRAPH_LOSS_WEIGHT:-0.0}"
 SEQ_LAYERS="${SEQ_LAYERS:-2}"
 GRAPH_ENRICHED="${GRAPH_ENRICHED:-false}"
 LENGTH_AWARE="${LENGTH_AWARE:-false}"
+GIT_PUSH="${GIT_PUSH:-false}"
 # PATIENCE and PRETRAIN_EPOCHS have dataset-specific defaults (set in case block below)
 
 mkdir -p "$WORK_DIR/data" "$WORK_DIR/results" "$WORK_DIR/logs"
@@ -46,6 +47,61 @@ fail() {
 find_first() {
   local name="$1"
   find /kaggle/input -type f -name "$name" -print -quit 2>/dev/null || true
+}
+
+# Save baseline checkpoints and results back to the repo so they persist
+# across Kaggle sessions. When GIT_PUSH=true (and GIT_TOKEN is set),
+# commits and pushes automatically.
+git_save() {
+  local msg="$1"
+  shift
+  local files=("$@")
+  if [[ ${#files[@]} -eq 0 ]]; then return; fi
+
+  cd "$PROJECT_DIR"
+  local added=false
+  for f in "${files[@]}"; do
+    if git add "$f" 2>/dev/null; then added=true; fi
+  done
+  if $added && ! git diff --cached --quiet 2>/dev/null; then
+    git commit -m "$msg" || { log "WARNING: git commit failed"; cd - >/dev/null; return; }
+    if [[ "$GIT_PUSH" == "true" ]]; then
+      git push || log "WARNING: git push failed"
+      log "Pushed: $msg"
+    else
+      log "Committed (no push): $msg"
+    fi
+  fi
+  cd - >/dev/null
+}
+
+save_seed_checkpoints() {
+  local seed="$1"
+  local src_dir="$RESULT_DIR/seed_${seed}/checkpoints"
+  local dst_dir="$PROJECT_DIR/results/${DATASET}/seed_${seed}/checkpoints"
+  [[ -d "$src_dir" ]] || return 0
+
+  mkdir -p "$dst_dir"
+  local files_to_add=()
+  for model in mf lightgcn sasrec; do
+    if [[ -f "$src_dir/${model}.pt" ]]; then
+      cp "$src_dir/${model}.pt" "$dst_dir/${model}.pt"
+      files_to_add+=("results/${DATASET}/seed_${seed}/checkpoints/${model}.pt")
+      log "Saved ${model}.pt to repo (seed $seed)"
+    fi
+  done
+  git_save "Add ${DATASET} seed ${seed} baseline checkpoints" "${files_to_add[@]}"
+}
+
+save_comparison() {
+  local src_dir="$RESULT_DIR/comparison"
+  local dst_dir="$PROJECT_DIR/results/${DATASET}/comparison"
+  [[ -d "$src_dir" ]] || return 0
+
+  mkdir -p "$dst_dir"
+  cp "$src_dir"/* "$dst_dir/" 2>/dev/null || true
+  log "Saved comparison results to repo"
+  git_save "Add ${DATASET} comparison results" "results/${DATASET}/comparison/"
 }
 
 download_beauty() {
@@ -72,6 +128,24 @@ download_beauty() {
 log "Project: $PROJECT_DIR"
 log "Dataset: $DATASET"
 log "Outputs: $WORK_DIR"
+
+if [[ "$GIT_PUSH" == "true" ]]; then
+  if [[ -z "${GIT_TOKEN:-}" ]]; then
+    log "WARNING: GIT_PUSH=true but GIT_TOKEN not set — auto-push disabled"
+    GIT_PUSH="false"
+  else
+    cd "$PROJECT_DIR"
+    REMOTE_URL="$(git remote get-url origin 2>/dev/null || echo "")"
+    if [[ "$REMOTE_URL" == *"github.com"* && "$REMOTE_URL" != *"${GIT_TOKEN}"* ]]; then
+      REPO_SLUG="$(echo "$REMOTE_URL" | sed 's|.*github.com[:/]||; s|\.git$||')"
+      git remote set-url origin "https://${GIT_TOKEN}@github.com/${REPO_SLUG}.git"
+    fi
+    git config user.email "${GIT_EMAIL:-kaggle-runner@noreply.com}"
+    git config user.name "${GIT_NAME:-Kaggle Runner}"
+    cd - >/dev/null
+    log "Git auto-push enabled"
+  fi
+fi
 
 if ! "$PYTHON_BIN" -c "import numpy, scipy, torch" >/dev/null 2>&1; then
   log "Installing Python dependencies"
@@ -178,18 +252,18 @@ for seed in "${SEED_ARRAY[@]}"; do
   fi
 
   log "Starting seed $seed"
-  # Copy LightGCN checkpoint from repo if present (saves ~45 min retraining).
-  # MF and SASRec are NOT copied — they need full EPOCHS=100 to converge on Book
-  # and stale checkpoints from earlier runs give wrong scores.
+  # Copy baseline checkpoints from repo if present (saves retraining time).
   REPO_CKPT_DIR="$PROJECT_DIR/results/${DATASET}/seed_${seed}/checkpoints"
   if [[ -d "$REPO_CKPT_DIR" ]]; then
     mkdir -p "$SEED_DIR/checkpoints"
-    src="$REPO_CKPT_DIR/lightgcn.pt"
-    dst="$SEED_DIR/checkpoints/lightgcn.pt"
-    if [[ -f "$src" && ! -f "$dst" ]]; then
-      cp "$src" "$dst"
-      log "Copied baseline checkpoint: lightgcn.pt (seed $seed)"
-    fi
+    for ckpt in mf.pt lightgcn.pt sasrec.pt; do
+      src="$REPO_CKPT_DIR/$ckpt"
+      dst="$SEED_DIR/checkpoints/$ckpt"
+      if [[ -f "$src" && ! -f "$dst" ]]; then
+        cp "$src" "$dst"
+        log "Copied baseline checkpoint: $ckpt (seed $seed)"
+      fi
+    done
   fi
   RESUME_ARGS=()
   if [[ -d "$SEED_DIR/checkpoints" ]]; then
@@ -217,12 +291,15 @@ for seed in "${SEED_ARRAY[@]}"; do
     --models "${MODEL_ARRAY[@]}" \
     "${RESUME_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"
   log "Completed seed $seed"
+  save_seed_checkpoints "$seed"
 done
 
 log "Aggregating seed results"
 "$PYTHON_BIN" "$PROJECT_DIR/src/aggregate_beauty_results.py" \
   --results-dir "$RESULT_DIR" \
   --seeds "${SEED_ARRAY[@]}" 2>&1 | tee -a "$LOG_FILE"
+
+save_comparison
 
 log "Done"
 log "Results: $RESULT_DIR/comparison"

@@ -29,6 +29,7 @@ results/book/*
 !results/book/seed_456/
 !results/book/seed_789/
 !results/book/seed_1024/
+!results/book/comparison/
 results/book/seed_42/*
 results/book/seed_123/*
 results/book/seed_456/*
