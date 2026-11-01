@@ -864,9 +864,9 @@ def train_joint_model(model, loader, data, args, name, checkpoint):
     # --- Phase 1: gate-only warm-up (encoders frozen) ---
     if pretrain_epochs > 0:
         log(f"{name} phase-1: training fusion gate only for {pretrain_epochs} epochs")
-        # Freeze all encoder params; only fusion gate trains
+        encoder_prefixes = ("node_embedding", "sequence_encoder", "gcn_")
         for param_name, param in model.named_parameters():
-            param.requires_grad_(param_name.startswith("fusion"))
+            param.requires_grad_(not param_name.startswith(encoder_prefixes))
         gate_optimizer = torch.optim.Adam(
             [p for p in model.parameters() if p.requires_grad],
             lr=args.learning_rate,
