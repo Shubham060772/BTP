@@ -20,7 +20,8 @@ WORK_DIR="${KAGGLE_WORK_DIR:-/kaggle/working/adafuse}"
 PYTHON_BIN="${PYTHON_BIN:-python}"
 SEEDS_TEXT="${SEEDS:-42 123 456 789 1024}"
 EPOCHS="${EPOCHS:-100}"
-EVAL_EVERY="${EVAL_EVERY:-5}"
+# EVAL_EVERY default is dataset-specific (beauty=5, book=10); set below in case block
+EVAL_EVERY="${EVAL_EVERY:-}"
 NUM_WORKERS="${NUM_WORKERS:-2}"
 LEARNING_RATE="${LEARNING_RATE:-0.001}"
 ALPHA_REG="${ALPHA_REG:-0.0}"
@@ -169,6 +170,7 @@ case "$DATASET" in
     # timestamped leave-two-out dataset.
     PATIENCE="${PATIENCE:-20}"
     PRETRAIN_EPOCHS="${PRETRAIN_EPOCHS:-0}"
+    EVAL_EVERY="${EVAL_EVERY:-5}"
     CORE="${CORE:-3}"
     BATCH_SIZE="${BATCH_SIZE:-1024}"
     RANKING="full"
@@ -195,10 +197,11 @@ case "$DATASET" in
     ;;
 
   book)
-    # Book needs more epochs — MF/SASRec don't converge in 30 epochs on 2.3M interactions.
-    # PATIENCE=30 gives models more time; PRETRAIN_EPOCHS=20 stabilises the AdaFuse gate.
+    # Book (52K users): eval is slow, so EVAL_EVERY=10 halves validation overhead.
+    # PATIENCE=30 gives models time to converge; PRETRAIN_EPOCHS=20 stabilises fusion gates.
     PATIENCE="${PATIENCE:-30}"
     PRETRAIN_EPOCHS="${PRETRAIN_EPOCHS:-20}"
+    EVAL_EVERY="${EVAL_EVERY:-10}"
     BATCH_SIZE="${BATCH_SIZE:-4096}"
     RANKING="sampled"
     RESULT_DIR="$WORK_DIR/results/book"
@@ -226,7 +229,7 @@ case "$DATASET" in
     else
       log "Using existing processed data: $PROCESSED_DATA"
     fi
-    DEFAULT_MODELS="popularity mf lightgcn sasrec sasgcn concat adafuse"
+    DEFAULT_MODELS="popularity mf lightgcn sasrec sasgcn adafuse"
     ;;
 
   *)
