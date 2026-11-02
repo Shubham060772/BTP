@@ -76,22 +76,32 @@ git_save() {
   cd - >/dev/null
 }
 
-save_seed_checkpoints() {
+save_seed_results() {
   local seed="$1"
-  local src_dir="$RESULT_DIR/seed_${seed}/checkpoints"
-  local dst_dir="$PROJECT_DIR/results/${DATASET}/seed_${seed}/checkpoints"
-  [[ -d "$src_dir" ]] || return 0
-
-  mkdir -p "$dst_dir"
+  local seed_src="$RESULT_DIR/seed_${seed}"
+  local seed_dst="$PROJECT_DIR/results/${DATASET}/seed_${seed}"
   local files_to_add=()
-  for model in mf lightgcn sasrec; do
-    if [[ -f "$src_dir/${model}.pt" ]]; then
-      cp "$src_dir/${model}.pt" "$dst_dir/${model}.pt"
-      files_to_add+=("results/${DATASET}/seed_${seed}/checkpoints/${model}.pt")
-      log "Saved ${model}.pt to repo (seed $seed)"
-    fi
-  done
-  git_save "Add ${DATASET} seed ${seed} baseline checkpoints" "${files_to_add[@]}"
+
+  # Save all model checkpoints (.pt files)
+  if [[ -d "$seed_src/checkpoints" ]]; then
+    mkdir -p "$seed_dst/checkpoints"
+    for pt_file in "$seed_src/checkpoints/"*.pt; do
+      [[ -f "$pt_file" ]] || continue
+      local name="$(basename "$pt_file")"
+      cp "$pt_file" "$seed_dst/checkpoints/$name"
+      files_to_add+=("results/${DATASET}/seed_${seed}/checkpoints/$name")
+      log "Saved $name to repo (seed $seed)"
+    done
+  fi
+
+  # Save summary.json
+  if [[ -f "$seed_src/summary.json" ]]; then
+    cp "$seed_src/summary.json" "$seed_dst/summary.json"
+    files_to_add+=("results/${DATASET}/seed_${seed}/summary.json")
+    log "Saved summary.json to repo (seed $seed)"
+  fi
+
+  git_save "Add ${DATASET} seed ${seed} results" "${files_to_add[@]}"
 }
 
 save_comparison() {
@@ -294,7 +304,7 @@ for seed in "${SEED_ARRAY[@]}"; do
     --models "${MODEL_ARRAY[@]}" \
     "${RESUME_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"
   log "Completed seed $seed"
-  save_seed_checkpoints "$seed"
+  save_seed_results "$seed"
 done
 
 log "Aggregating seed results"

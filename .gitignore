@@ -20,46 +20,17 @@ Slide*.PNG
 *.jsonl
 *.pt
 
-# results/ — ignore everything except Book baseline checkpoints
+# results/ — track Book outputs (checkpoints, summaries, comparison)
 results/*
 !results/book/
 results/book/*
-!results/book/seed_42/
-!results/book/seed_123/
-!results/book/seed_456/
-!results/book/seed_789/
-!results/book/seed_1024/
+!results/book/seed_*/
 !results/book/comparison/
-results/book/seed_42/*
-results/book/seed_123/*
-results/book/seed_456/*
-results/book/seed_789/*
-results/book/seed_1024/*
-!results/book/seed_42/checkpoints/
-!results/book/seed_123/checkpoints/
-!results/book/seed_456/checkpoints/
-!results/book/seed_789/checkpoints/
-!results/book/seed_1024/checkpoints/
-results/book/seed_42/checkpoints/*
-results/book/seed_123/checkpoints/*
-results/book/seed_456/checkpoints/*
-results/book/seed_789/checkpoints/*
-results/book/seed_1024/checkpoints/*
-!results/book/seed_42/checkpoints/mf.pt
-!results/book/seed_42/checkpoints/lightgcn.pt
-!results/book/seed_42/checkpoints/sasrec.pt
-!results/book/seed_123/checkpoints/mf.pt
-!results/book/seed_123/checkpoints/lightgcn.pt
-!results/book/seed_123/checkpoints/sasrec.pt
-!results/book/seed_456/checkpoints/mf.pt
-!results/book/seed_456/checkpoints/lightgcn.pt
-!results/book/seed_456/checkpoints/sasrec.pt
-!results/book/seed_789/checkpoints/mf.pt
-!results/book/seed_789/checkpoints/lightgcn.pt
-!results/book/seed_789/checkpoints/sasrec.pt
-!results/book/seed_1024/checkpoints/mf.pt
-!results/book/seed_1024/checkpoints/lightgcn.pt
-!results/book/seed_1024/checkpoints/sasrec.pt
+results/book/seed_*/*
+!results/book/seed_*/summary.json
+!results/book/seed_*/checkpoints/
+results/book/seed_*/checkpoints/*
+!results/book/seed_*/checkpoints/*.pt
 
 # Datasets are attached separately in Kaggle
 roadmap/data/*
